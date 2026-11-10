@@ -1,0 +1,204 @@
+name: data-services
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *defaults
+    image: postgres:18.4-alpine
+    container_name: postgres
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/PostgreSQL:/var/lib/postgresql
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+      start_interval: 5s
+
+  redis:
+    <<: *defaults
+    image: docker.io/valkey/valkey:alpine
+    container_name: redis
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/Redis:/data
+    command: valkey-server --appendonly yes
+    stop_grace_period: 15s
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+      start_interval: 5s
+
+  garage:
+    <<: *defaults
+    image: dxflrs/garage:v2.3.0
+    container_name: garage
+    networks:
+      - data-network
+    expose:
+      - "3900"
+      - "3903"
+    volumes:
+      - /srv/containers/Garage/garage.toml:/etc/garage.toml:ro
+      - /srv/containers/Garage/Meta:/var/lib/garage/meta
+      - /srv/containers/Garage/Data:/var/lib/garage/data
+    environment:
+      RUST_LOG: "garage=info"
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+    labels:
+      proxy.aliases: assets
+      proxy.assets.port: "3900"
+      proxy.assets.homepage.name: "Garage"
+      proxy.assets.homepage.icon: "@selfhst/garage.svg"
+      proxy.assets.homepage.category: "Databases"
+
+  rabbitmq:
+    <<: *defaults
+    image: rabbitmq:alpine
+    container_name: rabbitmq
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/RabbitMQ:/var/lib/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_VHOST: boul2gom
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+      start_interval: 5s
+
+  influxdb:
+    <<: *defaults
+    image: influxdb:2-alpine
+    container_name: influxdb
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/InfluxDB:/var/lib/influxdb2
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_INIT_USERNAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_INIT_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: boul2gom
+      DOCKER_INFLUXDB_INIT_BUCKET: boul2gom
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_INIT_ADMIN_TOKEN}
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+    labels:
+      proxy.aliases: influx
+      proxy.influx.homepage.name: "Influx DB"
+      proxy.influx.homepage.icon: "@selfhst/influxdb.svg"
+      proxy.influx.homepage.category: "Databases"
+      
+  meilisearch:
+    <<: *defaults
+    image: getmeili/meilisearch:latest
+    container_name: meilisearch
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/Meilisearch:/meili_data
+    environment:
+      MEILI_ENV: production
+      MEILI_UPGRADE_DB: true
+      MEILI_NO_ANALYTICS: true
+      MEILI_SCHEDULE_SNAPSHOT:
+      MEILI_LOG_LEVEL: WARN
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:7700/health | grep -q '{\"status\":\"available\"}'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+      start_interval: 5s
+      
+  dbgate:
+    <<: *defaults
+    image: dbgate/dbgate:alpine
+    container_name: dbgate
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/DbGate:/root/.dbgate
+    environment:
+      WEB_ROOT: ""
+      LANGUAGE: "fr"
+      LOG_LEVEL: "warn"
+
+      PERMISSIONS:
+      SHELL_CONNECTION: "false"
+      SHELL_SCRIPTING: "false"
+
+      OAUTH_AUTH: https://auth.boul2gom.com/authorize
+      OAUTH_TOKEN: https://auth.boul2gom.com/api/oidc/token
+      OAUTH_LOGOUT: https://auth.boul2gom.com/api/oidc/end-session
+      OAUTH_CLIENT_ID: ${DBGATE_OIDC_ID}
+      OAUTH_CLIENT_SECRET: ${DBGATE_OIDC_SECRET}
+      OAUTH_SCOPE: openid profile email groups
+      OAUTH_LOGIN_FIELD: email
+
+      CONNECTIONS: "postgres"
+      LABEL_postgres: "Local Postgres"
+      ENGINE_postgres: "postgres@dbgate-plugin-postgres"
+      SERVER_postgres: "postgres"
+      PORT_postgres: "5432"
+      USER_postgres: "${POSTGRES_USER}"
+      PASSWORD_postgres: "${POSTGRES_PASSWORD}"
+      USE_SSL_postgres: ""
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    labels:
+      proxy.aliases: data
+      proxy.idle_timeout: "15m"
+      proxy.data.homepage.name: "DbGate"
+      proxy.data.homepage.icon: "@selfhst/dbgate.png"
+      proxy.data.homepage.category: "Databases"
+
+networks:
+  data-network:
+    driver: bridge
+    name: data-network
