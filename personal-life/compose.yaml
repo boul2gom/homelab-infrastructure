@@ -13,7 +13,7 @@ x-defaults: &defaults
 services:
   trek:
     <<: *defaults
-    image: mauriceboe/trek:latest
+    image: mauriceboe/trek:5.1.3
     container_name: trek
     networks:
       - data-network

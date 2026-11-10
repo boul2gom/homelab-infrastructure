@@ -11,7 +11,7 @@ x-defaults: &defaults
 services:
   calibre:
     <<: *defaults
-    image: lscr.io/linuxserver/calibre:latest
+    image: lscr.io/linuxserver/calibre:9.18.0
     container_name: calibre
     security_opt:
       - seccomp:unconfined
@@ -43,7 +43,7 @@ services:
 
   calibre-web:
     <<: *defaults
-    image: lscr.io/linuxserver/calibre-web:latest
+    image: lscr.io/linuxserver/calibre-web:0.6.27
     container_name: calibre-web
     security_opt:
       - no-new-privileges:true

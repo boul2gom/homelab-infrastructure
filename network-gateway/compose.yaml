@@ -13,7 +13,7 @@ x-defaults: &defaults
 services:
   godoxy:
     <<: *defaults
-    image: ghcr.io/yusing/godoxy:latest
+    image: ghcr.io/yusing/godoxy:v0.33.0
     container_name: godoxy
     user: 1000:1000
     group_add:
@@ -46,7 +46,7 @@ services:
       
   cloudflare-ddns:
     <<: *defaults
-    image: timothyjmiller/cloudflare-ddns:latest
+    image: timothyjmiller/cloudflare-ddns:2.3.1
     container_name: cloudflare-ddns
     network_mode: host
     environment:
@@ -57,7 +57,7 @@ services:
       
   blocky:
     <<: *defaults
-    image: ghcr.io/0xerr0r/blocky:latest
+    image: ghcr.io/0xerr0r/blocky:v0.36.0
     container_name: blocky
     user: 1000:1000
     cap_add:
@@ -83,7 +83,7 @@ services:
       
   blocky-ui:
     <<: *defaults
-    image: ghcr.io/gabeduartem/blocky-ui:latest
+    image: ghcr.io/gabeduartem/blocky-ui:2.2.0
     container_name: blocky-ui
     depends_on:
       - blocky
@@ -110,7 +110,7 @@ services:
       
   netbird-dashboard:
     <<: *defaults
-    image: netbirdio/dashboard:latest
+    image: netbirdio/dashboard:v2.96.1
     container_name: netbird-dashboard
     networks:
       - gateway-network
@@ -145,7 +145,7 @@ services:
 
   netbird-management:
     <<: *defaults
-    image: netbirdio/management:latest
+    image: netbirdio/management:0.82.1
     container_name: netbird-management
     expose:
       - "33073"
@@ -176,7 +176,6 @@ services:
       retries: 3
       start_period: 15s
     labels:
-      labels:
       proxy.aliases: mesh, mesh-http, mesh-grpc
       proxy.*.homepage.show: "false"  
       proxy.*.healthcheck.disable: "true"    
@@ -192,7 +191,7 @@ services:
 
   netbird-signal:
     <<: *defaults
-    image: netbirdio/signal:latest
+    image: netbirdio/signal:0.82.1
     container_name: netbird-signal
     expose:
       - "80"
@@ -222,7 +221,7 @@ services:
 
   netbird-relay:
     <<: *defaults
-    image: netbirdio/relay:latest
+    image: netbirdio/relay:0.82.1
     container_name: netbird-relay
     expose:
       - "33080"
@@ -239,7 +238,7 @@ services:
 
   netbird-coturn:
     <<: *defaults
-    image: coturn/coturn:latest
+    image: coturn/coturn:4.18.0
     container_name: netbird-coturn
     network_mode: host
     volumes:
@@ -249,7 +248,7 @@ services:
       
   netbird-client:
     <<: *defaults
-    image: netbirdio/netbird:latest
+    image: netbirdio/netbird:0.82.1
     container_name: netbird-client
     network_mode: host
     cap_add:

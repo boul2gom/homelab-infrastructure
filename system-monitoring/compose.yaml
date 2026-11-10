@@ -13,7 +13,7 @@ x-defaults: &defaults
 services:
   kener:
     <<: *defaults
-    image: rajnandan1/kener:latest-alpine
+    image: rajnandan1/kener:v4.2.1-alpine
     container_name: kener
     networks:
       - data-network
@@ -42,7 +42,7 @@ services:
 
   scrutiny-web:
     <<: *defaults
-    image: ghcr.io/analogj/scrutiny:latest-web
+    image: ghcr.io/analogj/scrutiny:v0.10.0-web
     container_name: scrutiny-web
     networks:
       - data-network
@@ -65,7 +65,7 @@ services:
 
   scrutiny-collector:
     <<: *defaults
-    image: ghcr.io/analogj/scrutiny:latest-collector
+    image: ghcr.io/analogj/scrutiny:v0.10.0-collector
     container_name: scrutiny-collector
     cap_add:
       - SYS_RAWIO
@@ -89,7 +89,7 @@ services:
 
   dozzle:
     <<: *defaults
-    image: amir20/dozzle:alpine
+    image: amir20/dozzle:v11.4.2-alpine
     container_name: dozzle
     networks:
       - data-network
