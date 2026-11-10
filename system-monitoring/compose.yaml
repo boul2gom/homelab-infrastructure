@@ -1,0 +1,125 @@
+name: system-monitoring
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  kener:
+    <<: *defaults
+    image: rajnandan1/kener:latest-alpine
+    container_name: kener
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/Kener:/app/database
+    environment:
+      KENER_SECRET_KEY: ${KENER_SECRET_KEY}
+      ORIGIN: https://status.boul2gom.com
+      TZ: ${TZ}
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://kener:${KENER_DB_PASSWORD}@postgres:5432/kener
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_SENDER_EMAIL: "Louis - Status <noreply-status@boul2gom.com>"
+    healthcheck:
+      test: [ 'CMD', 'wget', '--spider', '-q', 'http://127.0.0.1:3000/healthcheck' ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+    labels:
+      proxy.aliases: status
+      proxy.status.homepage.name: "Kener"
+      proxy.status.homepage.icon: "@selfhst/kener.svg"
+      proxy.status.homepage.category: "Monitoring"
+
+  scrutiny-web:
+    <<: *defaults
+    image: ghcr.io/analogj/scrutiny:latest-web
+    container_name: scrutiny-web
+    networks:
+      - data-network
+      - monitoring-network
+    volumes:
+      - /srv/containers/Scrutiny/Web:/opt/scrutiny/config
+    healthcheck:
+      test: [ 'CMD', "curl", "-f", 'http://127.0.0.1:8080' ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+    labels:
+      proxy.aliases: disks
+      proxy.#1.middlewares.oidc:
+      proxy.disks.homepage.name: "Scrutiny"
+      proxy.disks.homepage.icon: "@selfhst/scrutiny.svg"
+      proxy.disks.homepage.category: "Monitoring"
+
+  scrutiny-collector:
+    <<: *defaults
+    image: ghcr.io/analogj/scrutiny:latest-collector
+    container_name: scrutiny-collector
+    cap_add:
+      - SYS_RAWIO
+      - SYS_ADMIN
+    networks:
+      - monitoring-network
+    volumes:
+      - /srv/containers/Scrutiny/Collector:/opt/scrutiny/config
+      - /run/udev:/run/udev:ro
+    devices:
+      - /dev/sda
+      - /dev/sdb
+      - /dev/sdc
+      - /dev/nvme0
+      - /dev/nvme0n1
+    environment:
+      COLLECTOR_API_ENDPOINT: http://scrutiny-web:8080
+    depends_on:
+      scrutiny-web:
+        condition: service_healthy
+
+  dozzle:
+    <<: *defaults
+    image: amir20/dozzle:alpine
+    container_name: dozzle
+    networks:
+      - data-network
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/containers/Dozzle:/data
+    environment:
+      DOZZLE_LEVEL: "info"
+      DOZZLE_NO_ANALYTICS: "true"
+      DOZZLE_ENABLE_ACTIONS: "true"
+      DOZZLE_HOSTNAME: "Local Docker"
+
+      DOZZLE_AUTH_PROVIDER: "none"
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      proxy.aliases: logs
+      proxy.idle_timeout: 15m
+      proxy.#1.middlewares.oidc:
+      proxy.logs.homepage.name: "Dozzle"
+      proxy.logs.homepage.icon: "@selfhst/dozzle.svg"
+      proxy.logs.homepage.category: "Monitoring"
+
+networks:
+  monitoring-network:
+    driver: bridge
+    name: monitoring-network
+  data-network:
+    external: true
