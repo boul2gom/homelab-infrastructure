@@ -1,0 +1,57 @@
+name: web-tools
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+      
+services:
+  stirling-pdf:
+    <<: *defaults
+    image: stirlingtools/stirling-pdf:latest-fat
+    container_name: stirling-pdf
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/Stirling/Tessdata:/usr/share/tessdata
+      - /srv/containers/Stirling/Configs:/configs
+      - /srv/containers/Stirling/Logs:/logs
+      - /srv/containers/Stirling/Pipeline:/pipeline
+    environment:
+      SECURITY_ENABLELOGIN: "true"
+      SECURITY_INITIALLOGIN_USERNAME: ${STIRLING_INIT_USERNAME}
+      SECURITY_INITIALLOGIN_PASSWORD: ${STIRLING_INIT_PASSWORD}
+      SYSTEM_GOOGLEVISIBILITY: "false"
+      SYSTEM_ROOTURIPATH: /
+      SYSTEMFILEUPLOADLIMIT: 2000MB
+      DISABLE_ADDITIONAL_FEATURES: "false"
+      SYSTEM_DATASOURCE_ENABLECUSTOMDATABASE: "true"
+      SYSTEM_DATASOURCE_CUSTOMDATABASEURL: jdbc:postgresql://postgres:5432/stirling
+      SYSTEM_DATASOURCE_USERNAME: ${STIRLING_DB_USERNAME}
+      SYSTEM_DATASOURCE_PASSWORD: ${STIRLING_DB_PASSWORD}
+      UI_LANGUAGES: fr_FR,en_US
+      SYSTEM_DEFAULTLOCALE: fr-FR
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fs http://localhost:8080/api/v1/info/status || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+      start_interval: 5s
+    labels:
+      proxy.aliases: pdf
+      proxy.idle_timeout: 1h
+      proxy.pdf.homepage.name: "Stirling"
+      proxy.pdf.homepage.icon: "@walkxcode/stirling-pdf.svg"
+      proxy.pdf.homepage.category: "Tools"
+
+networks:
+  default:
+    name: tools-network
+  data-network:
+    external: true
