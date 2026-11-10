@@ -1,0 +1,43 @@
+name: arcane-manager
+
+x-defaults: &defaults
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+      
+services:
+  arcane:
+    <<: *defaults
+    image: ghcr.io/getarcaneapp/manager:latest
+    container_name: arcane
+    privileged: true
+    cgroup: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/containers/Arcane:/app/data
+      - /srv/containers/Arcane/projects:/app/data/projects
+    environment:
+      APP_URL: https://arcane.boul2gom.com
+      ENCRYPTION_KEY: ${ARCANE_ENCRYPTION_KEY}
+      JWT_SECRET: ${ARCANE_JWT_SECRET}
+      PGID: 1000
+      PUID: 1000
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://127.0.0.1:3552/api/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+    labels:
+      proxy.aliases: arcane
+      proxy.arcane.homepage.name: "Arcane"
+      proxy.arcane.homepage.icon: "@walkxcode/arcane.svg"
+      proxy.arcane.homepage.category: "Monitoring"
+      
+networks:
+  default:
+    name: arcane-network
