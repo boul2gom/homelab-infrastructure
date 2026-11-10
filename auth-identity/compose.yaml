@@ -1,0 +1,52 @@
+name: auth-identity
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+      
+services:
+  pocket-id:
+    <<: *defaults
+    image: pocketid/pocket-id:latest
+    container_name: pocket-id
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/PocketID:/app/data
+    environment:
+      APP_URL: https://auth.boul2gom.com
+      ENCRYPTION_KEY: ${POCKETID_ENCRYPTION_KEY}
+      DB_CONNECTION_STRING: postgres://pocketid:${POCKETID_DB_PASSWORD}@postgres:5432/pocketid
+      FILE_BACKEND: s3
+      S3_BUCKET: pocket-id
+      S3_REGION: eu-west-3
+      S3_ENDPOINT: http://garage:3900
+      S3_ACCESS_KEY_ID: ${POCKETID_S3_ACCESS_KEY}
+      S3_SECRET_ACCESS_KEY: ${POCKETID_S3_SECRET_ACCESS_KEY}
+      S3_FORCE_PATH_STYLE: "true"
+      TRUST_PROXY: "true"
+      ALLOW_INSECURE_CALLBACK_URLS: "false"
+    healthcheck:
+      test: ["CMD", "/app/pocket-id", "healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+      start_interval: 5s
+    labels:
+      proxy.aliases: auth
+      proxy.auth.homepage.name: "Pocket ID"
+      proxy.auth.homepage.icon: "@selfhst/pocket-id.svg"
+      proxy.auth.homepage.category: "Authentication"
+      
+networks:
+  default:
+    name: auth-network
+  data-network:
+    external: true
