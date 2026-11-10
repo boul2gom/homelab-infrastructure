@@ -1,0 +1,278 @@
+name: network-gateway
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+      
+services:
+  godoxy:
+    <<: *defaults
+    image: ghcr.io/yusing/godoxy:latest
+    container_name: godoxy
+    user: 1000:1000
+    group_add:
+      - "989"
+    cap_drop:
+      - all
+    cap_add:
+      - NET_BIND_SERVICE
+    network_mode: host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "/srv/containers/GoDoxy/Error Pages:/app/error_pages:ro"
+      - /srv/containers/GoDoxy/Config:/app/config
+      - /srv/containers/GoDoxy/Logs:/app/logs
+      - /srv/containers/GoDoxy/Data:/app/data
+      - /srv/containers/GoDoxy/Certs:/app/certs
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TZ: ${TZ}
+      GODOXY_API_USER: ${GODOXY_API_USER}
+      GODOXY_API_PASSWORD: ${GODOXY_API_PASSWORD}
+      GODOXY_API_JWT_SECURE: "true"
+      GODOXY_API_JWT_SECRET: ${GODOXY_API_JWT_SECRET}
+      GODOXY_OIDC_REDIRECT_URL: https://proxy.boul2gom.com/api/auth/callback
+      GODOXY_OIDC_ISSUER_URL: https://auth.boul2gom.com
+      GODOXY_OIDC_CLIENT_ID: ${GODOXY_OIDC_CLIENT_ID}
+      GODOXY_OIDC_CLIENT_SECRET: ${GODOXY_OIDC_CLIENT_SECRET}
+      GODOXY_OIDC_SCOPES: openid,profile,email,groups
+      GODOXY_OIDC_ALLOWED_GROUPS: maison
+      
+  cloudflare-ddns:
+    <<: *defaults
+    image: timothyjmiller/cloudflare-ddns:latest
+    container_name: cloudflare-ddns
+    network_mode: host
+    environment:
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      DOMAINS: eu-west-3.boul2gom.com
+      PROXIED: "false"
+      IP6_PROVIDER: none
+      
+  blocky:
+    <<: *defaults
+    image: ghcr.io/0xerr0r/blocky:latest
+    container_name: blocky
+    user: 1000:1000
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      - gateway-network
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /srv/containers/Blocky/config.yml:/app/config.yml:ro
+      - /srv/containers/Blocky/Cache:/data/cache
+      - /srv/containers/Blocky/Logs:/logs
+    environment:
+      TZ: ${TZ}
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    healthcheck:
+      test: ["CMD", "/app/blocky", "healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      
+  blocky-ui:
+    <<: *defaults
+    image: ghcr.io/gabeduartem/blocky-ui:latest
+    container_name: blocky-ui
+    depends_on:
+      - blocky
+    networks:
+      - gateway-network
+    volumes:
+      - /srv/containers/Blocky/Logs:/logs:ro
+    environment:
+      BLOCKY_API_URL: http://blocky:4000
+      QUERY_LOG_TYPE: sqlite
+      QUERY_LOG_TARGET: /logs/querylog.db
+    healthcheck:
+      test: ["CMD", 'wget', '--spider', '-q', "http://127.0.0.1:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      proxy.aliases: dns
+      proxy.#1.middlewares.oidc:
+      proxy.dns.homepage.name: "Blocky UI"
+      proxy.dns.homepage.icon: "@selfhst/blocky.svg"
+      proxy.dns.homepage.category: "Network"
+      
+  netbird-dashboard:
+    <<: *defaults
+    image: netbirdio/dashboard:latest
+    container_name: netbird-dashboard
+    networks:
+      - gateway-network
+    environment:
+      NETBIRD_MGMT_API_ENDPOINT: https://mesh.boul2gom.com:443
+      NETBIRD_MGMT_GRPC_API_ENDPOINT: https://mesh.boul2gom.com:443
+      AUTH_AUTHORITY: https://auth.boul2gom.com
+      AUTH_AUDIENCE: ${NETBIRD_POCKETID_CLIENT_ID}
+      AUTH_CLIENT_ID: ${NETBIRD_POCKETID_CLIENT_ID}
+      AUTH_CLIENT_SECRET: ${NETBIRD_POCKETID_CLIENT_SECRET}
+      USE_AUTH0: "false"
+      AUTH_SUPPORTED_SCOPES: openid profile email groups
+      AUTH_REDIRECT_URI: /auth
+      AUTH_SILENT_REDIRECT_URI: /silent-auth
+      NETBIRD_TOKEN_SOURCE: idToken
+      NGINX_SSL_PORT: 80
+    depends_on:
+      - netbird-management
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      proxy.aliases: vpn
+      proxy.vpn.port: "80"
+      proxy.idle_timeout: 15m
+      proxy.vpn.homepage.name: "NetBird"
+      proxy.vpn.homepage.icon: "@selfhst/netbird.svg"
+      proxy.vpn.homepage.category: "Network"
+
+  netbird-management:
+    <<: *defaults
+    image: netbirdio/management:latest
+    container_name: netbird-management
+    expose:
+      - "33073"
+    networks:
+      - data-network
+      - gateway-network
+    volumes:
+      - /srv/containers/NetBird/Manager:/var/lib/netbird
+      - /srv/containers/NetBird/Config/management.json:/etc/netbird/management.json
+    command: [
+      "--port", "33073",
+      "--log-file", "console",
+      "--log-level", "info",
+      "--disable-anonymous-metrics=true",
+      "--single-account-mode-domain=vpn.boul2gom.com",
+      "--dns-domain=netbird.selfhosted"
+    ]
+    environment:
+      NETBIRD_STORE_ENGINE_POSTGRES_DSN: postgres://netbird:${NETBIRD_POSTGRES_PASSWORD}@postgres:5432/netbird?sslmode=disable
+      NETBIRD_MGMT_IDP: pocketid
+      NETBIRD_IDP_MGMT_CLIENT_ID: ${NETBIRD_POCKETID_CLIENT_ID}
+      NETBIRD_IDP_MGMT_EXTRA_MANAGEMENT_ENDPOINT: https://auth.boul2gom.com
+      NETBIRD_IDP_MGMT_EXTRA_API_TOKEN: ${NETBIRD_POCKETID_API_TOKEN}
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/33073"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      labels:
+      proxy.aliases: mesh, mesh-http, mesh-grpc
+      proxy.*.homepage.show: "false"  
+      proxy.*.healthcheck.disable: "true"    
+      proxy.mesh-http.scheme: http
+      proxy.mesh-grpc.scheme: h2c      
+      proxy.mesh.rules: |
+        header Content-Type glob(application/grpc*) {
+          route mesh-grpc
+        }
+        path glob(/*) {
+          route mesh-http
+        }
+
+  netbird-signal:
+    <<: *defaults
+    image: netbirdio/signal:latest
+    container_name: netbird-signal
+    expose:
+      - "80"
+    networks:
+      - gateway-network
+    volumes:
+      - /srv/containers/NetBird/Signal:/var/lib/netbird
+    healthcheck:
+      test: ["CMD", "/busybox/wget", "--spider", "-q", "http://127.0.0.1:9090/metrics"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      proxy.aliases: negotiate, negotiate-http, negotiate-grpc
+      proxy.*.homepage.show: "false"
+      proxy.*.healthcheck.disable: "true"
+      proxy.negotiate-http.scheme: http
+      proxy.negotiate-grpc.scheme: h2c
+      proxy.negotiate.rules: |
+        header Content-Type glob(application/grpc*) {
+          route negotiate-grpc
+        }
+        path glob(/*) {
+          route negotiate-http
+        }
+
+  netbird-relay:
+    <<: *defaults
+    image: netbirdio/relay:latest
+    container_name: netbird-relay
+    expose:
+      - "33080"
+    networks:
+      - gateway-network
+    environment:
+      NB_LOG_LEVEL: info
+      NB_LISTEN_ADDRESS: :33080
+      NB_EXPOSED_ADDRESS: rels://relay.boul2gom.com:443/relay
+      NB_AUTH_SECRET: ${NETBIRD_AUTH_SECRET}
+    labels:
+      proxy.aliases: relay
+      proxy.relay.homepage.show: "false"
+
+  netbird-coturn:
+    <<: *defaults
+    image: coturn/coturn:latest
+    container_name: netbird-coturn
+    network_mode: host
+    volumes:
+      - /srv/containers/NetBird/Config/turnserver.conf:/etc/turnserver.conf:ro
+    command:
+      - -c /etc/turnserver.conf
+      
+  netbird-client:
+    <<: *defaults
+    image: netbirdio/netbird:latest
+    container_name: netbird-client
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /srv/containers/NetBird/Client:/etc/netbird
+    environment:
+      NB_MANAGEMENT_URL: "https://mesh.boul2gom.com:443"
+      NB_SETUP_KEY: ${NETBIRD_CLIENT_SETUP_KEY}
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/netbird", "status", "--check", "ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      
+networks:
+  gateway-network:
+    driver: bridge
+    name: gateway-network
+  data-network:
+    external: true
