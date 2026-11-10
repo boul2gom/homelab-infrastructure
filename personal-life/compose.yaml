@@ -1,0 +1,66 @@
+name: personal-life
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+      
+services:
+  trek:
+    <<: *defaults
+    image: mauriceboe/trek:latest
+    container_name: trek
+    networks:
+      - data-network
+    volumes:
+      - /srv/containers/Trek/Data:/app/data
+      - /srv/containers/Trek/Uploads:/app/uploads
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      TZ: ${TZ}
+      ENCRYPTION_KEY: ${TREK_ENCRYPTION_KEY}
+      APP_URL: https://travel.boul2gom.com
+      ALLOWED_ORIGINS: https://travel.boul2gom.com
+      
+      FORCE_HTTPS: "true"
+      TRUST_PROXY: 1
+
+      OIDC_ONLY: "true"
+      OIDC_ISSUER: https://auth.boul2gom.com
+      OIDC_CLIENT_ID: ${TREK_OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${TREK_OIDC_CLIENT_SECRET}
+      OIDC_DISPLAY_NAME: "Pocket ID"
+      OIDC_DISCOVERY_URL: https://auth.boul2gom.com/.well-known/openid-configuration
+      
+      SMTP_HOST: smtp.resend.com
+      SMTP_PORT: 465
+      SMTP_USER: resend
+      SMTP_PASS: ${RESEND_API_KEY}
+      SMTP_FROM: "Louis - Travel <noreply-travel@boul2gom.com>"
+      SMTP_SKIP_TLS_VERIFY: "false"
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      proxy.aliases: travel
+      proxy.idle_timeout: 15m
+      proxy.travel.homepage.name: "Trek"
+      proxy.travel.homepage.icon: "@selfhst/trek.svg"
+      proxy.travel.homepage.category: "Personal Life"
+      
+networks:
+  default:
+    name: life-network
+  data-network:
+    external: true
