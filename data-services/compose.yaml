@@ -154,7 +154,7 @@ services:
       
   dbgate:
     <<: *defaults
-    image: dbgate/dbgate:7.3.4-alpine
+    image: dbgate/dbgate:7.3.6-alpine
     container_name: dbgate
     networks:
       - data-network
