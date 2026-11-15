@@ -110,7 +110,7 @@ services:
       
   netbird-dashboard:
     <<: *defaults
-    image: netbirdio/dashboard:v2.96.1
+    image: netbirdio/dashboard:v2.97.0
     container_name: netbird-dashboard
     networks:
       - gateway-network
@@ -145,7 +145,7 @@ services:
 
   netbird-management:
     <<: *defaults
-    image: netbirdio/management:0.82.1
+    image: netbirdio/management:0.83.1
     container_name: netbird-management
     expose:
       - "33073"
@@ -191,7 +191,7 @@ services:
 
   netbird-signal:
     <<: *defaults
-    image: netbirdio/signal:0.82.1
+    image: netbirdio/signal:0.83.1
     container_name: netbird-signal
     expose:
       - "80"
@@ -221,7 +221,7 @@ services:
 
   netbird-relay:
     <<: *defaults
-    image: netbirdio/relay:0.82.1
+    image: netbirdio/relay:0.83.1
     container_name: netbird-relay
     expose:
       - "33080"
@@ -248,7 +248,7 @@ services:
       
   netbird-client:
     <<: *defaults
-    image: netbirdio/netbird:0.82.1
+    image: netbirdio/netbird:0.83.1
     container_name: netbird-client
     network_mode: host
     cap_add:
