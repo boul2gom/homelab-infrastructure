@@ -33,7 +33,7 @@ services:
       
   iframely:
     <<: *defaults
-    image: makeplane/iframely:v2.5.8
+    image: makeplane/iframely:v2.5.7
     entrypoint: ["node", "server.js"]
     container_name: iframely
     networks:
