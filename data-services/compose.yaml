@@ -131,7 +131,7 @@ services:
       
   meilisearch:
     <<: *defaults
-    image: getmeili/meilisearch:v1.56.2
+    image: getmeili/meilisearch:v1.57.0
     container_name: meilisearch
     networks:
       - data-network
