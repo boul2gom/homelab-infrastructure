@@ -138,6 +138,12 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["lscr.io/linuxserver/calibre-web"],
       "allowedVersions": "!/^5\\./"
+    },
+    {
+      "description": "Arcane Manager: upgraded directly via Arcane UI (Settings -> Updates) and synced back via Git Backup Push",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/getarcaneapp/manager"],
+      "enabled": false
     }
   ]
 }
