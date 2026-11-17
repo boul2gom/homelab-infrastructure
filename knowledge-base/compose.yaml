@@ -51,7 +51,7 @@ services:
       
   outline:
     <<: *defaults
-    image: docker.getoutline.com/outlinewiki/outline:1.12.0
+    image: outlinewiki/outline:1.12.0
     container_name: outline
     networks:
       - data-network

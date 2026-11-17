@@ -10,14 +10,10 @@
   "timezone": "Europe/Paris",
   "labels": ["dependencies", "docker"],
 
-  "dependencyDashboardTitle": "📦 Homelab Docker Updates Dashboard",
-  "dependencyDashboardHeader": "Ce tableau récapitule toutes les mises à jour d'images Docker détectées dans `homelab-infrastructure`. Coche une case pour forcer Renovate à relancer ou créer une PR.",
-
   "commitMessagePrefix": "chore({{parentDir}}):",
   "commitMessageAction": "update",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "from {{currentVersion}} to {{newVersion}}",
-  "prTitle": "chore({{parentDir}}): update {{depName}} from {{currentVersion}} to {{newVersion}}",
 
   "docker-compose": {
     "managerFilePatterns": [
@@ -27,54 +23,57 @@
 
   "packageRules": [
     {
-      "description": "Règle globale Docker : ignorer les tags instables et ajouter une note Arcane dans les PR",
+      "description": "Global Docker rule: ignore unstable tags, enforce commit/PR format, and add an Arcane GitOps note to PRs",
       "matchDatasources": ["docker"],
       "ignoreUnstable": true,
       "allowedVersions": "!/^(latest|main|master|edge|nightly|dev|release|stable|alpine)$/",
+      "commitMessageAction": "update",
+      "commitMessageTopic": "{{depName}}",
+      "commitMessageExtra": "from {{currentVersion}} to {{newVersion}}",
       "prBodyNotes": [
         "---",
-        "🔄 **GitOps Arcane** : En mergeant cette Pull Request, **Arcane** synchronisera automatiquement le projet `{{parentDir}}` et redéploiera le conteneur."
+        "🔄 **Arcane GitOps**: Merging this Pull Request will trigger **Arcane** to automatically sync the `{{parentDir}}` project and redeploy the updated container."
       ]
     },
     {
-      "description": "Automerge des patchs (x.y.Z) pour les versions stables >= 1.0.0 après 3 jours sans bug",
+      "description": "Automerge patch updates (x.y.Z) for stable versions >= 1.0.0 after a 3-day stability period",
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["patch"],
       "minimumReleaseAge": "3 days",
       "automerge": true
     },
     {
-      "description": "Désactiver l'automerge sur toutes les versions 0.x.y (ex: GoDoxy, Blocky, Scrutiny, Calibre-Web, NetBird) car leurs patchs contiennent souvent des features",
+      "description": "Disable automerge on all 0.x.y versions (e.g. GoDoxy, Blocky, Scrutiny, Calibre-Web, NetBird) as patch releases often include new features",
       "matchDatasources": ["docker"],
       "matchCurrentVersion": "/^v?0\\./",
       "automerge": false
     },
     {
-      "description": "Memos utilise un versioning CalVer (ex: 26.11.0) : désactiver l'automerge pour ne pas rater les features dans les release notes",
+      "description": "Memos uses CalVer (e.g. 26.11.0): disable automerge so new features in release notes are not missed",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["neosmemo/memos"],
       "automerge": false
     },
     {
-      "description": "Marquer les mises à jour MAJEURES avec un label et un avertissement de Breaking Change",
+      "description": "Highlight major updates with a dedicated label, breaking change prefix (!), and warning banner",
       "matchUpdateTypes": ["major"],
       "automerge": false,
       "labels": ["dependencies", "docker", "major-update"],
       "commitMessagePrefix": "chore({{parentDir}})!:",
-      "prTitle": "chore({{parentDir}})!: major update {{depName}} from {{currentVersion}} to {{newVersion}}",
+      "commitMessageAction": "major update",
       "prBodyNotes": [
-        "⚠️ **MISE À JOUR MAJEURE** : Vérifie attentivement les Release Notes ci-dessous pour d'éventuels *Breaking Changes* ou migrations de base de données avant de merger."
+        "⚠️ **MAJOR UPDATE**: Carefully review the Release Notes below for potential *Breaking Changes* or database migrations before merging."
       ]
     },
     {
-      "description": "Immich Postgres (VectorChord) : parser le tag <pg_major>-vectorchord<x.y.z>",
+      "description": "Immich Postgres (VectorChord): parse <pg_major>-vectorchord<x.y.z> tag format",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/immich-app/postgres"],
       "versioning": "regex:^(?<major>\\d+)-vectorchord(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)(?<compatibility>-.*)?$",
       "automerge": false
     },
     {
-      "description": "Bases de données (Postgres & Immich Postgres) : ne jamais proposer de changement de version MAJEURE Postgres automatiquement (nécessite pg_upgrade/dump)",
+      "description": "Databases (Postgres & Immich Postgres): never propose automatic major Postgres version upgrades (requires manual pg_upgrade/dump)",
       "matchDatasources": ["docker"],
       "matchPackageNames": [
         "postgres",
@@ -84,7 +83,7 @@
       "enabled": false
     },
     {
-      "description": "Grouper Immich Server et Immich Machine Learning (openvino) dans une seule PR",
+      "description": "Group Immich Server and Immich Machine Learning (openvino) into a single PR",
       "matchDatasources": ["docker"],
       "matchPackageNames": [
         "ghcr.io/immich-app/immich-server",
@@ -92,18 +91,18 @@
       ],
       "groupName": "immich",
       "commitMessageTopic": "immich",
-      "prTitle": "chore(photos-storage): update immich to {{newVersion}}"
+      "commitMessageExtra": "to {{newVersion}}"
     },
     {
-      "description": "Grouper Scrutiny Web et Scrutiny Collector dans une seule PR",
+      "description": "Group Scrutiny Web and Scrutiny Collector into a single PR",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/analogj/scrutiny"],
       "groupName": "scrutiny",
       "commitMessageTopic": "scrutiny",
-      "prTitle": "chore(system-monitoring): update scrutiny to {{newVersion}}"
+      "commitMessageExtra": "to {{newVersion}}"
     },
     {
-      "description": "Grouper toute la stack NetBird dans une seule PR",
+      "description": "Group the entire NetBird stack into a single PR",
       "matchDatasources": ["docker"],
       "matchPackageNames": [
         "netbirdio/dashboard",
@@ -114,25 +113,31 @@
       ],
       "groupName": "netbird",
       "commitMessageTopic": "netbird stack",
-      "prTitle": "chore(network-gateway): update netbird stack to {{newVersion}}"
+      "commitMessageExtra": "to {{newVersion}}"
     },
     {
-      "description": "Blocky et images utilisant des versions à 2 chiffres (ex: v0.25)",
+      "description": "Blocky: support 2-digit version numbers (e.g. v0.25)",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/0xerr0r/blocky"],
       "versioning": "loose"
     },
     {
-      "description": "Kener : ignorer les tags de développement main-with-docs-*",
+      "description": "Kener: ignore development main-with-docs-* tags",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["rajnandan1/kener"],
       "allowedVersions": "!/^main/"
     },
     {
-      "description": "LinuxServer.io : ignorer les tags de build -lsXXX pour ne garder que les versions SemVer propres",
+      "description": "LinuxServer.io: ignore build-specific -lsXXX tags and keep clean SemVer versions only",
       "matchDatasources": ["docker"],
       "matchPackageNames": ["lscr.io/linuxserver/**"],
       "allowedVersions": "!/.*-ls\\d+$/"
+    },
+    {
+      "description": "Calibre-Web (LinuxServer.io): ignore legacy Calibre Desktop 5.x tags accidentally published to the calibre-web repository in 2021",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["lscr.io/linuxserver/calibre-web"],
+      "allowedVersions": "!/^5\\./"
     }
   ]
 }
