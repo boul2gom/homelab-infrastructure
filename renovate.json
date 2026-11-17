@@ -9,6 +9,7 @@
   ],
   "timezone": "Europe/Paris",
   "labels": ["dependencies", "docker"],
+  "dependencyDashboardTitle": "📦 Dashboard - Renovate",
 
   "commitMessagePrefix": "chore({{parentDir}}):",
   "commitMessageAction": "update",
@@ -36,10 +37,10 @@
       ]
     },
     {
-      "description": "Automerge patch updates (x.y.Z) for stable versions >= 1.0.0 after a 3-day stability period",
+      "description": "Automerge patch updates (x.y.Z) for stable versions >= 1.0.0 after a 24-hour stability period",
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["patch"],
-      "minimumReleaseAge": "3 days",
+      "minimumReleaseAge": "1 day",
       "automerge": true
     },
     {
