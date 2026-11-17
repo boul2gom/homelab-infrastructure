@@ -13,7 +13,7 @@ x-defaults: &defaults
 services:
   godoxy:
     <<: *defaults
-    image: ghcr.io/yusing/godoxy:v0.33.0
+    image: ghcr.io/yusing/godoxy:v0.34.0
     container_name: godoxy
     user: 1000:1000
     group_add:
