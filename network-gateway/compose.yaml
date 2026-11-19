@@ -258,7 +258,7 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - /srv/containers/NetBird/Client:/etc/netbird
+      - /srv/containers/NetBird/Client:/var/lib/netbird
     environment:
       NB_MANAGEMENT_URL: "https://mesh.boul2gom.com:443"
       NB_SETUP_KEY: ${NETBIRD_CLIENT_SETUP_KEY}
