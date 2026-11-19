@@ -81,7 +81,7 @@ services:
 
   rabbitmq:
     <<: *defaults
-    image: rabbitmq:4.4.0-alpine
+    image: rabbitmq:4.4.1-alpine
     container_name: rabbitmq
     networks:
       - data-network
