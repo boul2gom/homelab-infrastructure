@@ -89,7 +89,7 @@ services:
 
   dozzle:
     <<: *defaults
-    image: amir20/dozzle:v11.4.3-alpine
+    image: amir20/dozzle:v11.5.0-alpine
     container_name: dozzle
     networks:
       - data-network
