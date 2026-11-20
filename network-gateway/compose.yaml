@@ -140,6 +140,7 @@ services:
       proxy.vpn.homepage.name: "NetBird"
       proxy.vpn.homepage.icon: "@selfhst/netbird.svg"
       proxy.vpn.homepage.category: "Network"
+    # depends_on: netbird-management
 
   netbird-management:
     <<: *defaults
