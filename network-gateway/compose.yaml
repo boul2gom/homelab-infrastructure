@@ -238,7 +238,7 @@ services:
 
   netbird-coturn:
     <<: *defaults
-    image: coturn/coturn:4.19.1
+    image: coturn/coturn:4.19.2
     container_name: netbird-coturn
     network_mode: host
     volumes:
