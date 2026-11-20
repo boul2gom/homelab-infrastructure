@@ -13,7 +13,7 @@ x-defaults: &defaults
 services:
   kener:
     <<: *defaults
-    image: rajnandan1/kener:v4.2.1-alpine
+    image: rajnandan1/kener:4.2.2-alpine
     container_name: kener
     networks:
       - data-network
