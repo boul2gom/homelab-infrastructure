@@ -90,9 +90,6 @@ services:
     environment:
       IMMICH_URL: http://immich-server:2283
       IMMICH_API_KEY: ${IMMICH_API_KEY}
-    depends_on:
-      immich-server:
-        condition: service_healthy
     labels:
       proxy.aliases: photos-stats
       proxy.idle_timeout: 15m
