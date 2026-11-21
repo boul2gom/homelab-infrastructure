@@ -33,6 +33,7 @@ services:
     environment:
       DOCKER_HOST: unix:///var/run/docker.sock
       TZ: ${TZ}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
       GODOXY_API_USER: ${GODOXY_API_USER}
       GODOXY_API_PASSWORD: ${GODOXY_API_PASSWORD}
       GODOXY_API_JWT_SECURE: "true"
