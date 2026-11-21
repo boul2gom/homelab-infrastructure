@@ -52,7 +52,7 @@ services:
     environment:
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
       DOMAINS: eu-west-3.boul2gom.com
-      PROXIED: "false"
+      PROXIED: "true"
       IP6_PROVIDER: none
       
   blocky:
@@ -140,7 +140,6 @@ services:
       proxy.vpn.homepage.name: "NetBird"
       proxy.vpn.homepage.icon: "@selfhst/netbird.svg"
       proxy.vpn.homepage.category: "Network"
-    # depends_on: netbird-management
 
   netbird-management:
     <<: *defaults
@@ -157,7 +156,7 @@ services:
     command: [
       "--port", "33073",
       "--log-file", "console",
-      "--log-level", "info",
+      "--log-level", "error",
       "--disable-anonymous-metrics=true",
       "--single-account-mode-domain=vpn.boul2gom.com",
       "--dns-domain=netbird.selfhosted"
@@ -234,16 +233,6 @@ services:
     labels:
       proxy.aliases: relay
       proxy.relay.homepage.show: "false"
-
-  netbird-coturn:
-    <<: *defaults
-    image: coturn/coturn:4.19.2
-    container_name: netbird-coturn
-    network_mode: host
-    volumes:
-      - /srv/containers/NetBird/Config/turnserver.conf:/etc/turnserver.conf:ro
-    command:
-      - -c /etc/turnserver.conf
       
   netbird-client:
     <<: *defaults
