@@ -58,7 +58,7 @@ services:
       
   blocky:
     <<: *defaults
-    image: ghcr.io/0xerr0r/blocky:v0.36.0
+    image: ghcr.io/0xerr0r/blocky:v0.37.0
     container_name: blocky
     user: 1000:1000
     cap_add:
