@@ -116,8 +116,8 @@ services:
     networks:
       - gateway-network
     environment:
-      NETBIRD_MGMT_API_ENDPOINT: https://mesh.boul2gom.com:443
-      NETBIRD_MGMT_GRPC_API_ENDPOINT: https://mesh.boul2gom.com:443
+      NETBIRD_MGMT_API_ENDPOINT: https://vpn.boul2gom.com:443
+      NETBIRD_MGMT_GRPC_API_ENDPOINT: https://vpn.boul2gom.com:443
       AUTH_AUTHORITY: https://auth.boul2gom.com
       AUTH_AUDIENCE: ${NETBIRD_POCKETID_CLIENT_ID}
       AUTH_CLIENT_ID: ${NETBIRD_POCKETID_CLIENT_ID}
@@ -137,11 +137,9 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      proxy.aliases: vpn
+      proxy.aliases: vpn-ui
       proxy.vpn.port: "80"
-      proxy.vpn.homepage.name: "NetBird"
-      proxy.vpn.homepage.icon: "@selfhst/netbird.svg"
-      proxy.vpn.homepage.category: "Network"
+      proxy.*.homepage.show: "false"
 
   netbird-management:
     <<: *defaults
@@ -176,11 +174,26 @@ services:
       retries: 3
       start_period: 15s
     labels:
-      proxy.aliases: mesh, mesh-http, mesh-grpc
-      proxy.*.homepage.show: "false"  
+      proxy.aliases: vpn, mesh, mesh-http, mesh-grpc
       proxy.*.healthcheck.disable: "true"    
+      proxy.vpn.homepage.name: "NetBird"
+      proxy.vpn.homepage.icon: "@selfhst/netbird.svg"
+      proxy.vpn.homepage.category: "Network"
+      proxy.mesh.homepage.show: "false"
+      proxy.mesh-http.homepage.show: "false"
+      proxy.mesh-grpc.homepage.show: "false"
       proxy.mesh-http.scheme: http
       proxy.mesh-grpc.scheme: h2c      
+      proxy.vpn.rules: |
+        header Content-Type glob(application/grpc*) {
+          route mesh-grpc
+        }
+        path glob(/api/*) | path glob(/ws-proxy/*) {
+          route mesh-http
+        }
+        default {
+          route vpn-ui
+        }
       proxy.mesh.rules: |
         header Content-Type glob(application/grpc*) {
           route mesh-grpc
