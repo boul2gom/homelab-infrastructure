@@ -53,7 +53,6 @@ services:
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
       DOMAINS: eu-west-3.boul2gom.com
       PROXIED: "true"
-      IP6_PROVIDER: none
       
   blocky:
     <<: *defaults
