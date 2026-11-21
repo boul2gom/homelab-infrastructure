@@ -135,7 +135,6 @@ services:
     labels:
       proxy.aliases: vpn
       proxy.vpn.port: "80"
-      proxy.idle_timeout: 15m
       proxy.vpn.homepage.name: "NetBird"
       proxy.vpn.homepage.icon: "@selfhst/netbird.svg"
       proxy.vpn.homepage.category: "Network"
