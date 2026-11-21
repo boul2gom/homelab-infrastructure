@@ -44,6 +44,7 @@ services:
       GODOXY_OIDC_CLIENT_SECRET: ${GODOXY_OIDC_CLIENT_SECRET}
       GODOXY_OIDC_SCOPES: openid,profile,email,groups
       GODOXY_OIDC_ALLOWED_GROUPS: maison
+      GODOXY_METRICS_DISABLE_GPU: "true"
       
   cloudflare-ddns:
     <<: *defaults
