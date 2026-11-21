@@ -143,7 +143,7 @@ services:
 
   netbird-management:
     <<: *defaults
-    image: netbirdio/management:0.83.1
+    image: netbirdio/management:0.83.2
     container_name: netbird-management
     expose:
       - "33073"
@@ -204,7 +204,7 @@ services:
 
   netbird-signal:
     <<: *defaults
-    image: netbirdio/signal:0.83.1
+    image: netbirdio/signal:0.83.2
     container_name: netbird-signal
     expose:
       - "80"
@@ -234,7 +234,7 @@ services:
 
   netbird-relay:
     <<: *defaults
-    image: netbirdio/relay:0.83.1
+    image: netbirdio/relay:0.83.2
     container_name: netbird-relay
     expose:
       - "33080"
@@ -251,7 +251,7 @@ services:
       
   netbird-client:
     <<: *defaults
-    image: netbirdio/netbird:0.83.1
+    image: netbirdio/netbird:0.83.2
     container_name: netbird-client
     network_mode: host
     extra_hosts:
