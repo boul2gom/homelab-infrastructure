@@ -138,7 +138,7 @@ services:
       start_period: 10s
     labels:
       proxy.aliases: vpn-ui
-      proxy.vpn.port: "80"
+      proxy.vpn-ui.port: "80"
       proxy.*.homepage.show: "false"
 
   netbird-management:
@@ -254,6 +254,11 @@ services:
     image: netbirdio/netbird:0.83.1
     container_name: netbird-client
     network_mode: host
+    extra_hosts:
+      - "negotiate.boul2gom.com:127.0.0.1"
+      - "relay.boul2gom.com:127.0.0.1"
+      - "mesh.boul2gom.com:127.0.0.1"
+      - "vpn.boul2gom.com:127.0.0.1"
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN
@@ -263,7 +268,7 @@ services:
     volumes:
       - /srv/containers/NetBird/Client:/var/lib/netbird
     environment:
-      NB_MANAGEMENT_URL: "https://mesh.boul2gom.com:443"
+      NB_MANAGEMENT_URL: "https://vpn.boul2gom.com:443"
       NB_SETUP_KEY: ${NETBIRD_CLIENT_SETUP_KEY}
     healthcheck:
       test: ["CMD", "/usr/local/bin/netbird", "status", "--check", "ready"]
