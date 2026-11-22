@@ -291,13 +291,6 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: dns
-      proxy.#1.middlewares.oidc:
-      proxy.dns.homepage.name: "Blocky UI"
-      proxy.dns.homepage.icon: "@selfhst/blocky.svg"
-      proxy.dns.homepage.category: "Network"
-      # --- Traefik + Sablier ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.blocky-ui.rule: "Host(`dns.boul2gom.com`)"
@@ -340,11 +333,6 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: vpn-ui
-      proxy.vpn-ui.port: "80"
-      proxy.*.homepage.show: "false"
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.netbird-ui.rule: "Host(`vpn.boul2gom.com`)"
       traefik.http.routers.netbird-ui.entrypoints: "websecure"
@@ -385,35 +373,6 @@ services:
       retries: 3
       start_period: 15s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: vpn, mesh, mesh-http, mesh-grpc
-      proxy.*.healthcheck.disable: "true"    
-      proxy.vpn.homepage.name: "NetBird"
-      proxy.vpn.homepage.icon: "@selfhst/netbird.svg"
-      proxy.vpn.homepage.category: "Network"
-      proxy.mesh.homepage.show: "false"
-      proxy.mesh-http.homepage.show: "false"
-      proxy.mesh-grpc.homepage.show: "false"
-      proxy.mesh-http.scheme: http
-      proxy.mesh-grpc.scheme: h2c      
-      proxy.vpn.rules: |
-        header Content-Type glob(application/grpc*) {
-          route mesh-grpc
-        }
-        path glob(/api/*) | path glob(/ws-proxy/*) {
-          route mesh-http
-        }
-        default {
-          route vpn-ui
-        }
-      proxy.mesh.rules: |
-        header Content-Type glob(application/grpc*) {
-          route mesh-grpc
-        }
-        path glob(/*) {
-          route mesh-http
-        }
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.netbird-mgmt-grpc.rule: "(Host(`vpn.boul2gom.com`) || Host(`mesh.boul2gom.com`)) && HeaderRegexp(`Content-Type`, `^application/grpc`)"
       traefik.http.routers.netbird-mgmt-grpc.entrypoints: "websecure"
@@ -445,20 +404,6 @@ services:
       retries: 3
       start_period: 10s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: negotiate, negotiate-http, negotiate-grpc
-      proxy.*.homepage.show: "false"
-      proxy.*.healthcheck.disable: "true"
-      proxy.negotiate-http.scheme: http
-      proxy.negotiate-grpc.scheme: h2c
-      proxy.negotiate.rules: |
-        header Content-Type glob(application/grpc*) {
-          route negotiate-grpc
-        }
-        path glob(/*) {
-          route negotiate-http
-        }
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.netbird-signal-grpc.rule: "Host(`negotiate.boul2gom.com`) && HeaderRegexp(`Content-Type`, `^application/grpc`)"
       traefik.http.routers.netbird-signal-grpc.entrypoints: "websecure"
@@ -487,10 +432,6 @@ services:
       NB_EXPOSED_ADDRESS: rels://relay.boul2gom.com:443/relay
       NB_AUTH_SECRET: ${NETBIRD_AUTH_SECRET}
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: relay
-      proxy.relay.homepage.show: "false"
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.netbird-relay.rule: "Host(`relay.boul2gom.com`)"
       traefik.http.routers.netbird-relay.entrypoints: "websecure"

@@ -36,12 +36,6 @@ services:
       start_period: 15s
       start_interval: 5s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: status
-      proxy.status.homepage.name: "Kener"
-      proxy.status.homepage.icon: "@selfhst/kener.svg"
-      proxy.status.homepage.category: "Monitoring"
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.kener.rule: "Host(`status.boul2gom.com`)"
       traefik.http.routers.kener.entrypoints: "websecure"
@@ -65,13 +59,6 @@ services:
       start_period: 15s
       start_interval: 5s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: disks
-      proxy.#1.middlewares.oidc:
-      proxy.disks.homepage.name: "Scrutiny"
-      proxy.disks.homepage.icon: "@selfhst/scrutiny.svg"
-      proxy.disks.homepage.category: "Monitoring"
-      # --- Traefik + Tinyauth ---
       traefik.enable: "true"
       traefik.http.routers.scrutiny.rule: "Host(`disks.boul2gom.com`)"
       traefik.http.routers.scrutiny.entrypoints: "websecure"
@@ -127,14 +114,6 @@ services:
       start_period: 10s
       start_interval: 2s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: logs
-      proxy.idle_timeout: 15m
-      proxy.#1.middlewares.oidc:
-      proxy.logs.homepage.name: "Dozzle"
-      proxy.logs.homepage.icon: "@selfhst/dozzle.svg"
-      proxy.logs.homepage.category: "Monitoring"
-      # --- Traefik + Tinyauth + Sablier ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.dozzle.rule: "Host(`logs.boul2gom.com`)"

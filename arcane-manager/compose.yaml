@@ -11,7 +11,7 @@ x-defaults: &defaults
 services:
   arcane:
     <<: *defaults
-    image: ghcr.io/getarcaneapp/manager:v3.1.0
+    image: ghcr.io/getarcaneapp/manager:v3.1.1
     container_name: arcane
     privileged: true
     cgroup: host
@@ -35,12 +35,6 @@ services:
       start_period: 15s
       start_interval: 5s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: arcane
-      proxy.arcane.homepage.name: "Arcane"
-      proxy.arcane.homepage.icon: "@walkxcode/arcane.svg"
-      proxy.arcane.homepage.category: "Monitoring"
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.arcane.rule: "Host(`arcane.boul2gom.com`)"
       traefik.http.routers.arcane.entrypoints: "websecure"

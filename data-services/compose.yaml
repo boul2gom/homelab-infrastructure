@@ -74,13 +74,6 @@ services:
       start_period: 15s
       start_interval: 5s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: assets
-      proxy.assets.port: "3900"
-      proxy.assets.homepage.name: "Garage"
-      proxy.assets.homepage.icon: "@selfhst/garage.svg"
-      proxy.assets.homepage.category: "Databases"
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.garage.rule: "Host(`assets.boul2gom.com`)"
       traefik.http.routers.garage.entrypoints: "websecure"
@@ -134,12 +127,6 @@ services:
       start_period: 15s
       start_interval: 5s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: influx
-      proxy.influx.homepage.name: "Influx DB"
-      proxy.influx.homepage.icon: "@selfhst/influxdb.svg"
-      proxy.influx.homepage.category: "Databases"
-      # --- Traefik ---
       traefik.enable: "true"
       traefik.http.routers.influxdb.rule: "Host(`influx.boul2gom.com`)"
       traefik.http.routers.influxdb.entrypoints: "websecure"
@@ -212,13 +199,6 @@ services:
       start_period: 20s
       start_interval: 2s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: data
-      proxy.idle_timeout: "15m"
-      proxy.data.homepage.name: "DbGate"
-      proxy.data.homepage.icon: "@selfhst/dbgate.png"
-      proxy.data.homepage.category: "Databases"
-      # --- Traefik + Sablier ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.dbgate.rule: "Host(`data.boul2gom.com`)"

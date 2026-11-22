@@ -33,13 +33,6 @@ services:
       start_period: 10s
       start_interval: 2s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: memos
-      proxy.idle_timeout: 15m
-      proxy.memos.homepage.name: "Memos"
-      proxy.memos.homepage.icon: "@selfhst/memos.png"
-      proxy.memos.homepage.category: "Knowledge"
-      # --- Traefik + Sablier ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.memos.rule: "Host(`memos.boul2gom.com`)"
@@ -148,13 +141,6 @@ services:
       start_period: 10s
       start_interval: 2s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: wiki
-      proxy.idle_timeout: 15m
-      proxy.wiki.homepage.name: "Outline"
-      proxy.wiki.homepage.icon: "@selfhst/outline.svg"
-      proxy.wiki.homepage.category: "Knowledge"
-      # --- Traefik + Sablier (groupe partagé avec iframely) ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.outline.rule: "Host(`wiki.boul2gom.com`)"

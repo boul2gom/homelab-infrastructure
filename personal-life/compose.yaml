@@ -55,13 +55,6 @@ services:
       start_period: 10s
       start_interval: 2s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: travel
-      proxy.idle_timeout: 15m
-      proxy.travel.homepage.name: "Trek"
-      proxy.travel.homepage.icon: "@selfhst/trek.svg"
-      proxy.travel.homepage.category: "Personal Life"
-      # --- Traefik + Sablier ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.trek.rule: "Host(`travel.boul2gom.com`)"

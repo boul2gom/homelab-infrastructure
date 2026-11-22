@@ -34,15 +34,6 @@ services:
       start_period: 20s
       start_interval: 2s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: books-admin
-      proxy.books-admin.port: "8080"
-      proxy.idle_timeout: 15m
-      proxy.#1.middlewares.oidc:
-      proxy.books-admin.homepage.name: "Calibre"
-      proxy.books-admin.homepage.icon: "@selfhst/calibre.svg"
-      proxy.books-admin.homepage.category: "Books"
-      # --- Traefik + Tinyauth + Sablier ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.calibre.rule: "Host(`books-admin.boul2gom.com`)"
@@ -83,13 +74,6 @@ services:
       start_period: 20s
       start_interval: 5s
     labels:
-      # --- GoDoxy (à supprimer après bascule) ---
-      proxy.aliases: books
-      proxy.idle_timeout: 15m
-      proxy.books.homepage.name: "Calibre Web"
-      proxy.books.homepage.icon: "@selfhst/calibre-web.svg"
-      proxy.books.homepage.category: "Books"
-      # --- Traefik + Sablier ---
       traefik.enable: "true"
       traefik.docker.allownonrunning: "true"
       traefik.http.routers.calibre-web.rule: "Host(`books.boul2gom.com`)"
