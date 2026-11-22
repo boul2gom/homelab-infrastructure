@@ -19,7 +19,7 @@ services:
       - data-network
       - proxy-network
     volumes:
-      - /srv/containers/Stirling/Tessdata:/usr/share/tessdata
+      - /srv/containers/Stirling/Tessdata:/usr/share/tesseract-ocr/5/tessdata
       - /srv/containers/Stirling/Configs:/configs
       - /srv/containers/Stirling/Logs:/logs
       - /srv/containers/Stirling/Pipeline:/pipeline
