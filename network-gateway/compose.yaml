@@ -59,6 +59,7 @@ services:
       - "--entrypoints.websecure.http.tls.domains[0].main=boul2gom.com"
       - "--entrypoints.websecure.http.tls.domains[0].sans=*.boul2gom.com"
       - "--entrypoints.websecure.http.middlewares=cloudflare-realip@file,security-headers@file"
+      - "--entrypoints.websecure.transport.respondingTimeouts.readTimeout=0s"
       # Wildcard Let's Encrypt certificates with DNS-01 Cloudflare (Handle split-horizon with NetBird/Blocky)
       - "--certificatesresolvers.cloudflare.acme.email=louisdechorivit@gmail.com"
       - "--certificatesresolvers.cloudflare.acme.storage=/certs/acme.json"
