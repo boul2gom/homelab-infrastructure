@@ -93,6 +93,10 @@ services:
       RABBITMQ_DEFAULT_VHOST: boul2gom
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     stop_grace_period: 30s
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
@@ -191,6 +195,9 @@ services:
       USER_postgres: "${POSTGRES_USER}"
       PASSWORD_postgres: "${POSTGRES_PASSWORD}"
       USE_SSL_postgres: ""
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
       interval: 15s

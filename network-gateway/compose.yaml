@@ -141,6 +141,9 @@ services:
       OIDC_GROUPS_CLAIM: "groups"
       OIDC_AUTO_LOGIN: "true"
       OIDC_REDIRECT_URI: "https://proxy.boul2gom.com/auth/oidc/callback"
+    depends_on:
+      traefik:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5000/api/health"]
       interval: 15s
@@ -222,6 +225,11 @@ services:
       AUTH_OIDC_GROUPS_ATTRIBUTE: "groups"
       ENABLE_DOCKER: "true"
       ENABLE_KUBERNETES: "false"
+    depends_on:
+      traefik:
+        condition: service_healthy
+      blocky:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:7575/api/health/live"]
       interval: 15s
@@ -275,7 +283,8 @@ services:
     image: ghcr.io/gabeduartem/blocky-ui:2.2.0
     container_name: blocky-ui
     depends_on:
-      - blocky
+      blocky:
+        condition: service_healthy
     networks:
       - gateway-network
       - proxy-network
@@ -326,7 +335,8 @@ services:
       NETBIRD_TOKEN_SOURCE: idToken
       NGINX_SSL_PORT: 80
     depends_on:
-      - netbird-management
+      netbird-management:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:80/"]
       interval: 15s
@@ -367,6 +377,9 @@ services:
       NETBIRD_IDP_MGMT_CLIENT_ID: ${NETBIRD_POCKETID_CLIENT_ID}
       NETBIRD_IDP_MGMT_EXTRA_MANAGEMENT_ENDPOINT: https://auth.boul2gom.com
       NETBIRD_IDP_MGMT_EXTRA_API_TOKEN: ${NETBIRD_POCKETID_API_TOKEN}
+    depends_on:
+      traefik:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "bash", "-c", "</dev/tcp/127.0.0.1/33073"]
       interval: 15s
@@ -459,6 +472,15 @@ services:
     environment:
       NB_MANAGEMENT_URL: "https://vpn.boul2gom.com:443"
       NB_SETUP_KEY: ${NETBIRD_CLIENT_SETUP_KEY}
+    depends_on:
+      traefik:
+        condition: service_healthy
+      netbird-management:
+        condition: service_healthy
+      netbird-signal:
+        condition: service_healthy
+      netbird-relay:
+        condition: service_started
     healthcheck:
       test: ["CMD", "/usr/local/bin/netbird", "status", "--check", "ready"]
       interval: 15s

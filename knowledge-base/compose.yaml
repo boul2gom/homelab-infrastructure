@@ -133,6 +133,9 @@ services:
       RATE_LIMITER_DURATION_WINDOW: "60"
       LOG_LEVEL: "info"
       ENABLE_UPDATES: "true"
+    depends_on:
+      iframely:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/_health"]
       interval: 15s

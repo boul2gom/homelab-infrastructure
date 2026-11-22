@@ -77,6 +77,9 @@ services:
       TINYAUTH_OAUTH_PROVIDERS_POCKETID_USERINFOURL: "https://auth.boul2gom.com/api/oidc/userinfo"
       TINYAUTH_OAUTH_PROVIDERS_POCKETID_REDIRECTURL: "https://access.boul2gom.com/api/oauth/callback/pocketid"
       TINYAUTH_OAUTH_PROVIDERS_POCKETID_SCOPES: "openid,email,profile,groups"
+    depends_on:
+      pocket-id:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "tinyauth", "healthcheck"]
       interval: 15s
