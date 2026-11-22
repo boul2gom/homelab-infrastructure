@@ -52,6 +52,48 @@ services:
       traefik.http.routers.pocket-id.entrypoints: "websecure"
       traefik.http.routers.pocket-id.middlewares: "rate-limit@file"
       traefik.http.services.pocket-id.loadbalancer.server.port: "1411"
+
+  tinyauth:
+    <<: *defaults
+    image: ghcr.io/tinyauthapp/tinyauth:v5.2.0
+    container_name: tinyauth
+    user: 1000:1000
+    cap_drop:
+      - ALL
+    networks:
+      - proxy-network
+      - data-network
+    volumes:
+      - /srv/containers/Tinyauth:/data
+    environment:
+      TZ: ${TZ}
+      TINYAUTH_APPURL: "https://access.boul2gom.com"
+      TINYAUTH_ANALYTICS_ENABLED: "false"
+      TINYAUTH_LABELPROVIDER: "none"
+      TINYAUTH_DATABASE_DRIVER: "postgres"
+      TINYAUTH_DATABASE_PATH: "postgres://tinyauth:${TINYAUTH_DB_PASSWORD}@postgres:5432/tinyauth?sslmode=disable"
+      TINYAUTH_AUTH_SECURECOOKIE: "true"
+      TINYAUTH_AUTH_SESSIONEXPIRY: "86400"
+      TINYAUTH_OAUTH_AUTOREDIRECT: "pocketid"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_NAME: "Pocket ID"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_CLIENTID: "${TINYAUTH_OIDC_CLIENT_ID}"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_CLIENTSECRET: "${TINYAUTH_OIDC_CLIENT_SECRET}"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_AUTHURL: "https://auth.boul2gom.com/authorize"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_TOKENURL: "https://auth.boul2gom.com/api/oidc/token"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_USERINFOURL: "https://auth.boul2gom.com/api/oidc/userinfo"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_REDIRECTURL: "https://access.boul2gom.com/api/oauth/callback/pocketid"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_SCOPES: "openid,email,profile,groups"
+    healthcheck:
+      test: ["CMD", "tinyauth", "healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.tinyauth.rule: "Host(`access.boul2gom.com`)"
+      traefik.http.routers.tinyauth.entrypoints: "websecure"
+      traefik.http.services.tinyauth.loadbalancer.server.port: "3000"
       
 networks:
   default:

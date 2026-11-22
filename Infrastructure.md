@@ -99,9 +99,8 @@ graph TD
 | Service | Image | Auth | Subdomains proposés |
 |---------|-------|------|---------------------|
 | 🎉 Traefik | `traefik:v3.7.19` | API interne BasicAuth | *(reverse proxy 80/443)* |
-| 🎉 Traefik Manager | `ghcr.io/chr0nzz/traefik-manager:v1.15.8` | OIDC natif (Pocket-ID) | `proxy` · `gateway` · `gw` |
+| 🎉 Traefik Manager | `ghcr.io/chr0nzz/traefik-manager:1.15.8` | OIDC natif (Pocket-ID) | `proxy` · `gateway` · `gw` |
 | 🎉 Sablier | `ghcr.io/sablierapp/sablier:1.21.1` | *(interne)* | *(scale-to-zero)* |
-| 🎉 Tinyauth | `ghcr.io/tinyauthapp/tinyauth:v5.2.0` | OIDC (Pocket-ID) + PostgreSQL | `access` |
 | 🎉 Homarr | `ghcr.io/homarr-labs/homarr:v2.14.0` | OIDC natif (Pocket-ID) + PostgreSQL + Valkey | `home` · `dash` · `apps` |
 | 🎉 Cloudflare-DDNS | `timothyjmiller/cloudflare-ddns:latest` | *(aucune)* | *(aucun)* |
 | 🎉 Blocky | `ghcr.io/0xerr0r/blocky:latest` | *(réseau local)* | `dns` · `adblock` · `blocky` |
@@ -116,11 +115,12 @@ graph TD
 
 ---
 
-### 4. `auth-identity` — 2 conteneurs
+### 4. `auth-identity` — 3 conteneurs
 
 | Service | Image | DB | Auth | Subdomains proposés |
 |---------|-------|-----|------|---------------------|
 | 🎉 Pocket-ID | `ghcr.io/pocket-id/pocket-id:latest` | PostgreSQL partagé | Passkeys natif | `auth` · `id` · `login` |
+| 🎉 Tinyauth | `ghcr.io/tinyauthapp/tinyauth:v5.2.0` | PostgreSQL partagé | ForwardAuth OIDC (Pocket-ID) | `access` |
 | Logto | `ghcr.io/logto-io/logto:latest` | PostgreSQL partagé | OIDC natif | `sso` · `oauth` · `accounts` |
 
 ---
