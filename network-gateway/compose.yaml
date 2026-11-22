@@ -11,41 +11,6 @@ x-defaults: &defaults
       max-file: "3"
       
 services:
-  godoxy:
-    <<: *defaults
-    image: ghcr.io/yusing/godoxy:v0.34.0
-    container_name: godoxy
-    user: 1000:1000
-    group_add:
-      - "989"
-    cap_drop:
-      - all
-    cap_add:
-      - NET_BIND_SERVICE
-    network_mode: host
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - "/srv/containers/GoDoxy/Error Pages:/app/error_pages:ro"
-      - /srv/containers/GoDoxy/Config:/app/config
-      - /srv/containers/GoDoxy/Logs:/app/logs
-      - /srv/containers/GoDoxy/Data:/app/data
-      - /srv/containers/GoDoxy/Certs:/app/certs
-    environment:
-      DOCKER_HOST: unix:///var/run/docker.sock
-      TZ: ${TZ}
-      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
-      GODOXY_API_USER: ${GODOXY_API_USER}
-      GODOXY_API_PASSWORD: ${GODOXY_API_PASSWORD}
-      GODOXY_API_JWT_SECURE: "true"
-      GODOXY_API_JWT_SECRET: ${GODOXY_API_JWT_SECRET}
-      GODOXY_OIDC_REDIRECT_URL: https://proxy.boul2gom.com/api/auth/callback
-      GODOXY_OIDC_ISSUER_URL: https://auth.boul2gom.com
-      GODOXY_OIDC_CLIENT_ID: ${GODOXY_OIDC_CLIENT_ID}
-      GODOXY_OIDC_CLIENT_SECRET: ${GODOXY_OIDC_CLIENT_SECRET}
-      GODOXY_OIDC_SCOPES: openid,profile,email,groups
-      GODOXY_OIDC_ALLOWED_GROUPS: maison
-      GODOXY_METRICS_DISABLE_GPU: "true"
-      
   traefik:
     <<: *defaults
     image: traefik:v3.7.19
@@ -60,10 +25,8 @@ services:
     networks:
       - proxy-network
     ports:
-      # Ports temporaires pour test parallèle sans couper GoDoxy / NetBird VPN.
-      # À passer sur "80:80" et "443:443" au moment de la bascule (après arrêt de godoxy).
-      - "8088:80"
-      - "8443:443"
+      - "80:80"
+      - "443:443"
     # Avoid conflict with FileLoader/FlagLoader and allow Renovate to update plugins
     command:
       - "--global.sendAnonymousUsage=false"
