@@ -15,6 +15,9 @@ services:
     container_name: calibre
     security_opt:
       - seccomp:unconfined
+    networks:
+      - default
+      - proxy-network
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /srv/containers/Calibre/Config:/config
@@ -29,7 +32,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+      start_interval: 2s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: books-admin
       proxy.books-admin.port: "8080"
       proxy.idle_timeout: 15m
@@ -37,6 +42,20 @@ services:
       proxy.books-admin.homepage.name: "Calibre"
       proxy.books-admin.homepage.icon: "@selfhst/calibre.svg"
       proxy.books-admin.homepage.category: "Books"
+      # --- Traefik + Tinyauth + Sablier ---
+      traefik.enable: "true"
+      traefik.docker.allownonrunning: "true"
+      traefik.http.routers.calibre.rule: "Host(`books-admin.boul2gom.com`)"
+      traefik.http.routers.calibre.entrypoints: "websecure"
+      traefik.http.routers.calibre.middlewares: "tinyauth@file,sablier-calibre@docker"
+      traefik.http.services.calibre.loadbalancer.server.port: "8080"
+      traefik.http.middlewares.sablier-calibre.plugin.sablier.sablierUrl: "http://sablier:10000"
+      traefik.http.middlewares.sablier-calibre.plugin.sablier.group: "calibre"
+      traefik.http.middlewares.sablier-calibre.plugin.sablier.sessionDuration: "15m"
+      traefik.http.middlewares.sablier-calibre.plugin.sablier.keepAliveInterval: "30s"
+      traefik.http.middlewares.sablier-calibre.plugin.sablier.dynamic.displayName: "Calibre"
+      sablier.enable: "true"
+      sablier.group: "calibre"
 
   calibre-web:
     <<: *defaults
@@ -44,6 +63,9 @@ services:
     container_name: calibre-web
     security_opt:
       - no-new-privileges:true
+    networks:
+      - default
+      - proxy-network
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /srv/containers/Calibre/Web:/config
@@ -61,12 +83,29 @@ services:
       start_period: 20s
       start_interval: 5s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: books
       proxy.idle_timeout: 15m
       proxy.books.homepage.name: "Calibre Web"
       proxy.books.homepage.icon: "@selfhst/calibre-web.svg"
       proxy.books.homepage.category: "Books"
+      # --- Traefik + Sablier ---
+      traefik.enable: "true"
+      traefik.docker.allownonrunning: "true"
+      traefik.http.routers.calibre-web.rule: "Host(`books.boul2gom.com`)"
+      traefik.http.routers.calibre-web.entrypoints: "websecure"
+      traefik.http.routers.calibre-web.middlewares: "sablier-calibre-web@docker"
+      traefik.http.services.calibre-web.loadbalancer.server.port: "8083"
+      traefik.http.middlewares.sablier-calibre-web.plugin.sablier.sablierUrl: "http://sablier:10000"
+      traefik.http.middlewares.sablier-calibre-web.plugin.sablier.group: "calibre-web"
+      traefik.http.middlewares.sablier-calibre-web.plugin.sablier.sessionDuration: "15m"
+      traefik.http.middlewares.sablier-calibre-web.plugin.sablier.dynamic.displayName: "Calibre Web"
+      # Si Kobo Sync actif : remplacer dynamic.displayName ci-dessus par blocking.timeout: "1m"
+      sablier.enable: "true"
+      sablier.group: "calibre-web"
 
 networks:
   default:
     name: books-network
+  proxy-network:
+    external: true

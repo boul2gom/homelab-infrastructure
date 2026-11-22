@@ -18,6 +18,7 @@ services:
     networks:
       - photos-network
       - data-network
+      - proxy-network
     volumes:
       - /srv/data/photos:/data
       - /etc/localtime:/etc/localtime:ro
@@ -36,10 +37,16 @@ services:
     healthcheck:
       disable: false
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: photos
       proxy.photos.homepage.name: "Immich"
       proxy.photos.homepage.icon: "@selfhst/immich.svg"
       proxy.photos.homepage.category: "Photos"
+      # --- Traefik ---
+      traefik.enable: "true"
+      traefik.http.routers.immich.rule: "Host(`photos.boul2gom.com`)"
+      traefik.http.routers.immich.entrypoints: "websecure"
+      traefik.http.services.immich.loadbalancer.server.port: "2283"
 
   immich-machine-learning:
     <<: *defaults
@@ -83,4 +90,6 @@ networks:
     driver: bridge
     name: photos-network
   data-network:
+    external: true
+  proxy-network:
     external: true

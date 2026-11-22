@@ -15,6 +15,9 @@ services:
     container_name: arcane
     privileged: true
     cgroup: host
+    networks:
+      - default
+      - proxy-network
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /srv/containers/Arcane:/app/data
@@ -32,11 +35,19 @@ services:
       start_period: 15s
       start_interval: 5s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: arcane
       proxy.arcane.homepage.name: "Arcane"
       proxy.arcane.homepage.icon: "@walkxcode/arcane.svg"
       proxy.arcane.homepage.category: "Monitoring"
+      # --- Traefik ---
+      traefik.enable: "true"
+      traefik.http.routers.arcane.rule: "Host(`arcane.boul2gom.com`)"
+      traefik.http.routers.arcane.entrypoints: "websecure"
+      traefik.http.services.arcane.loadbalancer.server.port: "3552"
       
 networks:
   default:
     name: arcane-network
+  proxy-network:
+    external: true

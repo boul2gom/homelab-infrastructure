@@ -17,6 +17,7 @@ services:
     container_name: stirling-pdf
     networks:
       - data-network
+      - proxy-network
     volumes:
       - /srv/containers/Stirling/Tessdata:/usr/share/tessdata
       - /srv/containers/Stirling/Configs:/configs
@@ -44,14 +45,30 @@ services:
       start_period: 20s
       start_interval: 5s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: pdf
       proxy.idle_timeout: 1h
       proxy.pdf.homepage.name: "Stirling"
       proxy.pdf.homepage.icon: "@walkxcode/stirling-pdf.svg"
       proxy.pdf.homepage.category: "Tools"
+      # --- Traefik + Sablier ---
+      traefik.enable: "true"
+      traefik.docker.allownonrunning: "true"
+      traefik.http.routers.stirling-pdf.rule: "Host(`pdf.boul2gom.com`)"
+      traefik.http.routers.stirling-pdf.entrypoints: "websecure"
+      traefik.http.routers.stirling-pdf.middlewares: "sablier-stirling-pdf@docker"
+      traefik.http.services.stirling-pdf.loadbalancer.server.port: "8080"
+      traefik.http.middlewares.sablier-stirling-pdf.plugin.sablier.sablierUrl: "http://sablier:10000"
+      traefik.http.middlewares.sablier-stirling-pdf.plugin.sablier.group: "stirling-pdf"
+      traefik.http.middlewares.sablier-stirling-pdf.plugin.sablier.sessionDuration: "1h"
+      traefik.http.middlewares.sablier-stirling-pdf.plugin.sablier.dynamic.displayName: "Stirling PDF"
+      sablier.enable: "true"
+      sablier.group: "stirling-pdf"
 
 networks:
   default:
     name: tools-network
   data-network:
+    external: true
+  proxy-network:
     external: true

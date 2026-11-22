@@ -17,6 +17,7 @@ services:
     container_name: pocket-id
     networks:
       - data-network
+      - proxy-network
     volumes:
       - /srv/containers/PocketID:/app/data
     environment:
@@ -40,13 +41,22 @@ services:
       start_period: 15s
       start_interval: 5s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: auth
       proxy.auth.homepage.name: "Pocket ID"
       proxy.auth.homepage.icon: "@selfhst/pocket-id.svg"
       proxy.auth.homepage.category: "Authentication"
+      # --- Traefik ---
+      traefik.enable: "true"
+      traefik.http.routers.pocket-id.rule: "Host(`auth.boul2gom.com`)"
+      traefik.http.routers.pocket-id.entrypoints: "websecure"
+      traefik.http.routers.pocket-id.middlewares: "rate-limit@file"
+      traefik.http.services.pocket-id.loadbalancer.server.port: "1411"
       
 networks:
   default:
     name: auth-network
   data-network:
+    external: true
+  proxy-network:
     external: true

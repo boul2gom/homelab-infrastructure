@@ -60,12 +60,14 @@ services:
     networks:
       - proxy-network
     ports:
-      - "80:80"
-      - "443:443"
+      # Ports temporaires pour test parallèle sans couper GoDoxy / NetBird VPN.
+      # À passer sur "80:80" et "443:443" au moment de la bascule (après arrêt de godoxy).
+      - "8088:80"
+      - "8443:443"
     # Avoid conflict with FileLoader/FlagLoader and allow Renovate to update plugins
     command:
-      - "--global.checkNewVersion=true"
       - "--global.sendAnonymousUsage=false"
+      - "--api=true"
       - "--api.dashboard=false"
       - "--api.insecure=false"
       - "--ping=true"
@@ -287,6 +289,7 @@ services:
       REDIS_IS_EXTERNAL: "true"
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
+      REDIS_DATABASE_INDEX: "1"
       AUTH_PROVIDERS: "oidc,credentials"
       AUTH_OIDC_ISSUER: "https://auth.boul2gom.com"
       AUTH_OIDC_CLIENT_ID: "${HOMARR_OIDC_CLIENT_ID}"
@@ -361,17 +364,31 @@ services:
       QUERY_LOG_TYPE: sqlite
       QUERY_LOG_TARGET: /logs/querylog.db
     healthcheck:
-      test: ["CMD", 'wget', '--spider', '-q', "http://127.0.0.1:3000"]
-      interval: 30s
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000"]
+      interval: 15s
       timeout: 5s
       retries: 3
       start_period: 10s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: dns
       proxy.#1.middlewares.oidc:
       proxy.dns.homepage.name: "Blocky UI"
       proxy.dns.homepage.icon: "@selfhst/blocky.svg"
       proxy.dns.homepage.category: "Network"
+      # --- Traefik + Sablier ---
+      traefik.enable: "true"
+      traefik.docker.allownonrunning: "true"
+      traefik.http.routers.blocky-ui.rule: "Host(`dns.boul2gom.com`)"
+      traefik.http.routers.blocky-ui.entrypoints: "websecure"
+      traefik.http.routers.blocky-ui.middlewares: "tinyauth@file,sablier-blocky-ui@docker"
+      traefik.http.services.blocky-ui.loadbalancer.server.port: "3000"
+      traefik.http.middlewares.sablier-blocky-ui.plugin.sablier.sablierUrl: "http://sablier:10000"
+      traefik.http.middlewares.sablier-blocky-ui.plugin.sablier.group: "blocky-ui"
+      traefik.http.middlewares.sablier-blocky-ui.plugin.sablier.sessionDuration: "15m"
+      traefik.http.middlewares.sablier-blocky-ui.plugin.sablier.dynamic.displayName: "Blocky UI"
+      sablier.enable: "true"
+      sablier.group: "blocky-ui"
       
   netbird-dashboard:
     <<: *defaults
@@ -402,9 +419,16 @@ services:
       retries: 3
       start_period: 10s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: vpn-ui
       proxy.vpn-ui.port: "80"
       proxy.*.homepage.show: "false"
+      # --- Traefik ---
+      traefik.enable: "true"
+      traefik.http.routers.netbird-ui.rule: "Host(`vpn.boul2gom.com`)"
+      traefik.http.routers.netbird-ui.entrypoints: "websecure"
+      traefik.http.routers.netbird-ui.priority: "1"
+      traefik.http.services.netbird-ui.loadbalancer.server.port: "80"
 
   netbird-management:
     <<: *defaults
@@ -440,6 +464,7 @@ services:
       retries: 3
       start_period: 15s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: vpn, mesh, mesh-http, mesh-grpc
       proxy.*.healthcheck.disable: "true"    
       proxy.vpn.homepage.name: "NetBird"
@@ -467,6 +492,19 @@ services:
         path glob(/*) {
           route mesh-http
         }
+      # --- Traefik ---
+      traefik.enable: "true"
+      traefik.http.routers.netbird-mgmt-grpc.rule: "(Host(`vpn.boul2gom.com`) || Host(`mesh.boul2gom.com`)) && HeaderRegexp(`Content-Type`, `^application/grpc`)"
+      traefik.http.routers.netbird-mgmt-grpc.entrypoints: "websecure"
+      traefik.http.routers.netbird-mgmt-grpc.priority: "100"
+      traefik.http.routers.netbird-mgmt-grpc.service: "netbird-mgmt-grpc"
+      traefik.http.services.netbird-mgmt-grpc.loadbalancer.server.port: "33073"
+      traefik.http.services.netbird-mgmt-grpc.loadbalancer.server.scheme: "h2c"
+      traefik.http.routers.netbird-mgmt-http.rule: "(Host(`vpn.boul2gom.com`) && (PathPrefix(`/api`) || PathPrefix(`/ws-proxy`))) || Host(`mesh.boul2gom.com`)"
+      traefik.http.routers.netbird-mgmt-http.entrypoints: "websecure"
+      traefik.http.routers.netbird-mgmt-http.priority: "50"
+      traefik.http.routers.netbird-mgmt-http.service: "netbird-mgmt-http"
+      traefik.http.services.netbird-mgmt-http.loadbalancer.server.port: "33073"
 
   netbird-signal:
     <<: *defaults
@@ -486,6 +524,7 @@ services:
       retries: 3
       start_period: 10s
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: negotiate, negotiate-http, negotiate-grpc
       proxy.*.homepage.show: "false"
       proxy.*.healthcheck.disable: "true"
@@ -498,6 +537,19 @@ services:
         path glob(/*) {
           route negotiate-http
         }
+      # --- Traefik ---
+      traefik.enable: "true"
+      traefik.http.routers.netbird-signal-grpc.rule: "Host(`negotiate.boul2gom.com`) && HeaderRegexp(`Content-Type`, `^application/grpc`)"
+      traefik.http.routers.netbird-signal-grpc.entrypoints: "websecure"
+      traefik.http.routers.netbird-signal-grpc.priority: "100"
+      traefik.http.routers.netbird-signal-grpc.service: "netbird-signal-grpc"
+      traefik.http.services.netbird-signal-grpc.loadbalancer.server.port: "80"
+      traefik.http.services.netbird-signal-grpc.loadbalancer.server.scheme: "h2c"
+      traefik.http.routers.netbird-signal-http.rule: "Host(`negotiate.boul2gom.com`)"
+      traefik.http.routers.netbird-signal-http.entrypoints: "websecure"
+      traefik.http.routers.netbird-signal-http.priority: "10"
+      traefik.http.routers.netbird-signal-http.service: "netbird-signal-http"
+      traefik.http.services.netbird-signal-http.loadbalancer.server.port: "80"
 
   netbird-relay:
     <<: *defaults
@@ -514,8 +566,14 @@ services:
       NB_EXPOSED_ADDRESS: rels://relay.boul2gom.com:443/relay
       NB_AUTH_SECRET: ${NETBIRD_AUTH_SECRET}
     labels:
+      # --- GoDoxy (à supprimer après bascule) ---
       proxy.aliases: relay
       proxy.relay.homepage.show: "false"
+      # --- Traefik ---
+      traefik.enable: "true"
+      traefik.http.routers.netbird-relay.rule: "Host(`relay.boul2gom.com`)"
+      traefik.http.routers.netbird-relay.entrypoints: "websecure"
+      traefik.http.services.netbird-relay.loadbalancer.server.port: "33080"
       
   netbird-client:
     <<: *defaults

@@ -24,6 +24,20 @@
     ]
   },
 
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track Traefik experimental plugins declared in compose command flags",
+      "managerFilePatterns": [
+        "/(^|/)(?:docker-)?compose[^/]*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\.moduleName=github\\.com/(?<depName>[^\"\\s]+)\"?\\s+-\\s+\"?--experimental\\.plugins\\.[^.]+\\.version=(?<currentValue>v?[^\"\\s]+)"
+      ],
+      "datasourceTemplate": "github-releases"
+    }
+  ],
+
   "packageRules": [
     {
       "description": "Global Docker rule: ignore unstable tags, enforce commit/PR format, and add an Arcane GitOps note to PRs",
@@ -46,10 +60,19 @@
       "automerge": true
     },
     {
-      "description": "Disable automerge on all 0.x.y versions (e.g. GoDoxy, Blocky, Scrutiny, Calibre-Web, NetBird) as patch releases often include new features",
+      "description": "Disable automerge on all 0.x.y versions (e.g. Blocky, Scrutiny, Calibre-Web, NetBird) as patch releases often include new features",
       "matchDatasources": ["docker"],
       "matchCurrentVersion": "/^v?0\\./",
       "automerge": false
+    },
+    {
+      "description": "Traefik plugins (GitHub Releases): add Arcane GitOps note and disable automerge",
+      "matchDatasources": ["github-releases"],
+      "automerge": false,
+      "prBodyNotes": [
+        "---",
+        "🔄 **Arcane GitOps**: Merging this Pull Request will trigger **Arcane** to sync `{{parentDir}}` and reload Traefik with the updated plugin."
+      ]
     },
     {
       "description": "Memos uses CalVer (e.g. 26.11.0): disable automerge so new features in release notes are not missed",

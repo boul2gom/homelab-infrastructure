@@ -94,16 +94,19 @@ graph TD
 
 ---
 
-### 3. `network-gateway` — 12 conteneurs
+### 3. `network-gateway` — 14 conteneurs
 
 | Service | Image | Auth | Subdomains proposés |
 |---------|-------|------|---------------------|
-| 🎉 GoDoxy | `ghcr.io/yusing/godoxy:latest` | OIDC natif | `proxy` · `gateway` · `gw` |
+| 🎉 Traefik | `traefik:v3.7.19` | API interne BasicAuth | *(reverse proxy 80/443)* |
+| 🎉 Traefik Manager | `ghcr.io/chr0nzz/traefik-manager:v1.15.8` | OIDC natif (Pocket-ID) | `proxy` · `gateway` · `gw` |
+| 🎉 Sablier | `ghcr.io/sablierapp/sablier:1.21.1` | *(interne)* | *(scale-to-zero)* |
+| 🎉 Tinyauth | `ghcr.io/tinyauthapp/tinyauth:v5.2.0` | OIDC (Pocket-ID) + PostgreSQL | `access` |
+| 🎉 Homarr | `ghcr.io/homarr-labs/homarr:v2.14.0` | OIDC natif (Pocket-ID) + PostgreSQL + Valkey | `home` · `dash` · `apps` |
 | 🎉 Cloudflare-DDNS | `timothyjmiller/cloudflare-ddns:latest` | *(aucune)* | *(aucun)* |
 | 🎉 Blocky | `ghcr.io/0xerr0r/blocky:latest` | *(réseau local)* | `dns` · `adblock` · `blocky` |
-| 🎉 Blocky UI | `ghcr.io/gabeduartem/blocky-ui:latest` | Middleware OIDC | *(interne au dashboard)* |
+| 🎉 Blocky UI | `ghcr.io/gabeduartem/blocky-ui:latest` | ForwardAuth Tinyauth (Pocket-ID) | `dns` |
 | CrowdSec | `crowdsecurity/crowdsec:latest` | *(aucune)* | *(interne)* |
-| Glance | `glanceapp/glance:latest` | Middleware OIDC GoDoxy | `home` · `dash` · `apps` |
 | 🎉 NetBird Dashboard | `netbirdio/dashboard:latest` | OIDC natif | `vpn` · `mesh` · `netbird` |
 | 🎉 NetBird Management| `netbirdio/management:latest` | OIDC natif | `mesh` (API) |
 | 🎉 NetBird Signal | `netbirdio/signal:latest` | *(aucune)* | `negotiate` |
@@ -137,14 +140,13 @@ graph TD
 
 ---
 
-### 🎉 6. `photo-storage` — 4 conteneurs
+### 🎉 6. `photo-storage` — 3 conteneurs
 
 | Service | Image | DB | Auth | Subdomains proposés |
 |---------|-------|-----|------|---------------------|
 | 🎉 Immich Server | `ghcr.io/immich-app/immich-server:release` | Immich Postgres dédié | OIDC natif | `photos` · `gallery` · `pictures` |
 | 🎉 Immich ML | `ghcr.io/immich-app/immich-machine-learning:release-openvino` | *(aucune)* | *(interne)* | *(interne)* |
 | 🎉 Immich Postgres | `ghcr.io/immich-app/postgres:18-vectorchord1.1.1` | *(self)* | *(interne)* | *(interne)* |
-| 🎉 Immich Atlas | `ghcr.io/guimartins/immich-atlas:latest` | *(aucune)* | Middleware OIDC | `photos-stats` · `atlas` · `photos-analytics` |
 
 ---
 
@@ -247,7 +249,9 @@ graph TD
 ## URL et routing
 
 - **Chaque service** = un subdomain `xxx.boul2gom.com`
-- **Dashboard** = `home.boul2gom.com` (Glance)
+- **Reverse Proxy** = Traefik v3 + Sablier (`proxy.boul2gom.com` = Traefik Manager)
+- **ForwardAuth OIDC** = `access.boul2gom.com` (Tinyauth devant Pocket-ID)
+- **Dashboard** = `home.boul2gom.com` (Homarr)
 - **Pas de path-based routing** (problèmes de compatibilité)
 - **Page publique** : `status.boul2gom.com` (Kener, sans auth)
 
@@ -257,5 +261,4 @@ graph TD
 
 | Question | Options |
 |----------|---------|
-| Dashboard | Glance (minimaliste YAML) · Homarr (GUI widgets) |
 | Scanopy (futur) | Ajouter à network-gateway quand prêt |
