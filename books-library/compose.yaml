@@ -23,15 +23,12 @@ services:
       PUID: 1000
       PGID: 1000
       TZ: ${TZ}
-      PASSWORD: ${CALIBRE_PASSWORD}
-      CUSTOM_USER: ${CALIBRE_USER}
     healthcheck:
-      test: ['CMD-SHELL', 'curl -fs http://localhost:8080/ || exit 1']
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
       retries: 3
       start_period: 20s
-      start_interval: 5s
     labels:
       proxy.aliases: books-admin
       proxy.books-admin.port: "8080"
