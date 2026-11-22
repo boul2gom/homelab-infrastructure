@@ -78,26 +78,6 @@ services:
       start_period: 30s
       start_interval: 5s
 
-  immich-atlas:
-    <<: *defaults
-    image: ghcr.io/guimartins/immich-atlas:latest
-    container_name: immich-atlas
-    networks:
-      - photos-network
-    volumes:
-      - /srv/containers/Immich/Atlas:/appdata
-      - /srv/data/photos:/upload:ro
-    environment:
-      IMMICH_URL: http://immich-server:2283
-      IMMICH_API_KEY: ${IMMICH_API_KEY}
-    labels:
-      proxy.aliases: photos-stats
-      proxy.idle_timeout: 15m
-      proxy.#1.middlewares.oidc:
-      proxy.photos-stats.homepage.name: "Immich Atlas"
-      proxy.photos-stats.homepage.icon: "https://gist.githubusercontent.com/boul2gom/5a4b4d4fe3bc663bae2f43a8aad65b0b/raw/c4a70570a62c54ddc245331aa60fa8e8ed6c97c0/immich-atlas.svg"
-      proxy.photos-stats.homepage.category: "Photos"
-
 networks:
   photos-network:
     driver: bridge
