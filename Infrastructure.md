@@ -94,12 +94,11 @@ graph TD
 
 ---
 
-### 3. `network-gateway` — 14 conteneurs
+### 3. `network-gateway` — 13 conteneurs
 
 | Service | Image | Auth | Subdomains proposés |
 |---------|-------|------|---------------------|
 | 🎉 Traefik | `traefik:v3.7.19` | API interne BasicAuth | *(reverse proxy 80/443)* |
-| 🎉 Traefik Manager | `ghcr.io/chr0nzz/traefik-manager:1.15.8` | OIDC natif (Pocket-ID) | `proxy` · `gateway` · `gw` |
 | 🎉 Sablier | `ghcr.io/sablierapp/sablier:1.21.1` | *(interne)* | *(scale-to-zero)* |
 | 🎉 Homarr | `ghcr.io/homarr-labs/homarr:v2.14.0` | OIDC natif (Pocket-ID) + PostgreSQL + Valkey | `home` · `dash` · `apps` |
 | 🎉 Cloudflare-DDNS | `timothyjmiller/cloudflare-ddns:latest` | *(aucune)* | *(aucun)* |
@@ -249,7 +248,7 @@ graph TD
 ## URL et routing
 
 - **Chaque service** = un subdomain `xxx.boul2gom.com`
-- **Reverse Proxy** = Traefik v3 + Sablier (`proxy.boul2gom.com` = Traefik Manager)
+- **Reverse Proxy** = Traefik v3 + Sablier
 - **ForwardAuth OIDC** = `access.boul2gom.com` (Tinyauth devant Pocket-ID)
 - **Dashboard** = `home.boul2gom.com` (Homarr)
 - **Pas de path-based routing** (problèmes de compatibilité)

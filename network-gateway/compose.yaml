@@ -101,69 +101,6 @@ services:
       traefik.http.routers.traefik-api.service: "api@internal"
       traefik.http.routers.traefik-api.middlewares: "traefik-api-auth@file"
       
-  traefik-manager:
-    <<: *defaults
-    image: ghcr.io/chr0nzz/traefik-manager:1.15.8
-    container_name: traefik-manager
-    networks:
-      - proxy-network
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /srv/containers/TraefikManager/Config:/app/config
-      - /srv/containers/TraefikManager/Backups:/app/backups
-      - /srv/containers/Traefik/Dynamic:/app/dynamic:rw
-      - /srv/containers/Traefik/Certs/acme.json:/app/acme.json:ro
-      - /srv/containers/Traefik/Logs:/app/logs:ro
-    environment:
-      TZ: ${TZ}
-      PUID: "1000"
-      PGID: "1000"
-      LOG_LEVEL: "INFO"
-      TRAEFIK_API_URL: "http://traefik:8080"
-      TRAEFIK_API_USER: "${TRAEFIK_API_USER}"
-      TRAEFIK_API_PASSWORD: "${TRAEFIK_API_PASSWORD}"
-      DOMAINS: "boul2gom.com"
-      CERT_RESOLVER: "cloudflare"
-      CONFIG_DIR: "/app/dynamic"
-      SETTINGS_PATH: "/app/config/manager.yml"
-      ACME_JSON_PATH: "/app/acme.json"
-      ACCESS_LOG_PATH: "/app/logs/access.log"
-      BACKUP_DIR: "/app/backups"
-      AUTH_ENABLED: "true"
-      COOKIE_SECURE: "true"
-      PROXY_FIX_HOPS: "1"
-      OIDC_ENABLED: "true"
-      OIDC_PROVIDER_URL: "https://auth.boul2gom.com"
-      OIDC_CLIENT_ID: "${TRAEFIK_MANAGER_OIDC_CLIENT_ID}"
-      OIDC_CLIENT_SECRET: "${TRAEFIK_MANAGER_OIDC_CLIENT_SECRET}"
-      OIDC_DISPLAY_NAME: "Pocket ID"
-      OIDC_ALLOWED_GROUPS: "maison"
-      OIDC_GROUPS_CLAIM: "groups"
-      OIDC_AUTO_LOGIN: "true"
-      OIDC_REDIRECT_URI: "https://proxy.boul2gom.com/auth/oidc/callback"
-    depends_on:
-      traefik:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5000/api/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    labels:
-      traefik.enable: "true"
-      traefik.docker.allownonrunning: "true"
-      traefik.http.routers.traefik-manager.rule: "Host(`proxy.boul2gom.com`)"
-      traefik.http.routers.traefik-manager.entrypoints: "websecure"
-      traefik.http.routers.traefik-manager.middlewares: "sablier-traefik-manager@docker"
-      traefik.http.services.traefik-manager.loadbalancer.server.port: "5000"
-      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.sablierUrl: "http://sablier:10000"
-      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.group: "traefik-manager"
-      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.sessionDuration: "15m"
-      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.dynamic.displayName: "Traefik Manager"
-      sablier.enable: "true"
-      sablier.group: "traefik-manager"
-      
   sablier:
     <<: *defaults
     image: ghcr.io/sablierapp/sablier:1.21.1
