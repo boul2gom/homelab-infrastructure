@@ -46,6 +46,269 @@ services:
       GODOXY_OIDC_ALLOWED_GROUPS: maison
       GODOXY_METRICS_DISABLE_GPU: "true"
       
+  traefik:
+    <<: *defaults
+    image: traefik:v3.7.19
+    container_name: traefik
+    user: 1000:1000
+    group_add:
+      - "989"
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    networks:
+      - proxy-network
+    ports:
+      - "80:80"
+      - "443:443"
+    # Avoid conflict with FileLoader/FlagLoader and allow Renovate to update plugins
+    command:
+      - "--global.checkNewVersion=true"
+      - "--global.sendAnonymousUsage=false"
+      - "--api.dashboard=false"
+      - "--api.insecure=false"
+      - "--ping=true"
+      - "--ping.entryPoint=traefik"
+      # Logs & Access Logs JSON
+      - "--log.level=INFO"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/logs/access.log"
+      - "--accesslog.format=json"
+      - "--accesslog.bufferingsize=100"
+      - "--accesslog.fields.defaultmode=keep"
+      - "--accesslog.fields.headers.defaultmode=drop"
+      - "--accesslog.fields.headers.names.User-Agent=keep"
+      - "--accesslog.fields.headers.names.CF-Connecting-IP=keep"
+      - "--accesslog.fields.headers.names.X-Forwarded-For=keep"
+      - "--accesslog.fields.headers.names.X-Real-IP=keep"
+      # EntryPoints
+      - "--entrypoints.traefik.address=:8080"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      - "--entrypoints.websecure.address=:443"
+      - "--entrypoints.websecure.asDefault=true"
+      - "--entrypoints.websecure.http.tls.certResolver=cloudflare"
+      - "--entrypoints.websecure.http.tls.domains[0].main=boul2gom.com"
+      - "--entrypoints.websecure.http.tls.domains[0].sans=*.boul2gom.com"
+      - "--entrypoints.websecure.http.middlewares=cloudflare-realip@file,security-headers@file"
+      # Wildcard Let's Encrypt certificates with DNS-01 Cloudflare (Handle split-horizon with NetBird/Blocky)
+      - "--certificatesresolvers.cloudflare.acme.email=louisdechorivit@gmail.com"
+      - "--certificatesresolvers.cloudflare.acme.storage=/certs/acme.json"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.propagation.delayBeforeChecks=15s"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53"
+      # Providers
+      - "--providers.docker=true"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.network=proxy-network"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      # Plugins (keep .version after name for Renovate regex)
+      - "--experimental.plugins.sablier.moduleName=github.com/sablierapp/sablier-traefik-plugin"
+      - "--experimental.plugins.sablier.version=v1.4.0"
+      - "--experimental.plugins.traefik-real-ip.moduleName=github.com/zekihan/traefik-real-ip"
+      - "--experimental.plugins.traefik-real-ip.version=v0.3.0"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/containers/Traefik/Dynamic:/etc/traefik/dynamic:ro
+      - /srv/containers/Traefik/Certs:/certs
+      - /srv/containers/Traefik/Logs:/logs
+      - /srv/containers/Traefik/Plugins:/plugins-storage
+    environment:
+      TZ: ${TZ}
+      CF_DNS_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8080/ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik-api.rule: "PathPrefix(`/api`)"
+      traefik.http.routers.traefik-api.entrypoints: "traefik"
+      traefik.http.routers.traefik-api.service: "api@internal"
+      traefik.http.routers.traefik-api.middlewares: "traefik-api-auth@file"
+      
+  traefik-manager:
+    <<: *defaults
+    image: ghcr.io/chr0nzz/traefik-manager:v1.15.8
+    container_name: traefik-manager
+    networks:
+      - proxy-network
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /srv/containers/TraefikManager/Config:/app/config
+      - /srv/containers/TraefikManager/Backups:/app/backups
+      - /srv/containers/Traefik/Dynamic:/app/dynamic:rw
+      - /srv/containers/Traefik/Certs/acme.json:/app/acme.json:ro
+      - /srv/containers/Traefik/Logs/access.log:/app/logs/access.log:ro
+    environment:
+      TZ: ${TZ}
+      PUID: "1000"
+      PGID: "1000"
+      LOG_LEVEL: "INFO"
+      TRAEFIK_API_URL: "http://traefik:8080"
+      TRAEFIK_API_USER: "${TRAEFIK_API_USER}"
+      TRAEFIK_API_PASSWORD: "${TRAEFIK_API_PASSWORD}"
+      DOMAINS: "boul2gom.com"
+      CERT_RESOLVER: "cloudflare"
+      CONFIG_DIR: "/app/dynamic"
+      SETTINGS_PATH: "/app/config/manager.yml"
+      ACME_JSON_PATH: "/app/acme.json"
+      ACCESS_LOG_PATH: "/app/logs/access.log"
+      BACKUP_DIR: "/app/backups"
+      AUTH_ENABLED: "true"
+      COOKIE_SECURE: "true"
+      PROXY_FIX_HOPS: "1"
+      OIDC_ENABLED: "true"
+      OIDC_PROVIDER_URL: "https://auth.boul2gom.com"
+      OIDC_CLIENT_ID: "${TRAEFIK_MANAGER_OIDC_CLIENT_ID}"
+      OIDC_CLIENT_SECRET: "${TRAEFIK_MANAGER_OIDC_CLIENT_SECRET}"
+      OIDC_DISPLAY_NAME: "Pocket ID"
+      OIDC_ALLOWED_GROUPS: "maison"
+      OIDC_GROUPS_CLAIM: "groups"
+      OIDC_AUTO_LOGIN: "true"
+      OIDC_REDIRECT_URI: "https://proxy.boul2gom.com/auth/oidc/callback"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:5000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      traefik.enable: "true"
+      traefik.docker.allownonrunning: "true"
+      traefik.http.routers.traefik-manager.rule: "Host(`proxy.boul2gom.com`)"
+      traefik.http.routers.traefik-manager.entrypoints: "websecure"
+      traefik.http.routers.traefik-manager.middlewares: "sablier-traefik-manager@docker"
+      traefik.http.services.traefik-manager.loadbalancer.server.port: "5000"
+      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.sablierUrl: "http://sablier:10000"
+      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.group: "traefik-manager"
+      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.sessionDuration: "15m"
+      traefik.http.middlewares.sablier-traefik-manager.plugin.sablier.dynamic.displayName: "Traefik Manager"
+      sablier.enable: "true"
+      sablier.group: "traefik-manager"
+      
+  sablier:
+    <<: *defaults
+    image: ghcr.io/sablierapp/sablier:1.21.1
+    container_name: sablier
+    user: 1000:1000
+    group_add:
+      - "989"
+    cap_drop:
+      - ALL
+    networks:
+      - proxy-network
+    command:
+      - start
+      - --configFile=/etc/sablier/sablier.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /srv/containers/Sablier/Config/sablier.yaml:/etc/sablier/sablier.yaml:ro
+      - /srv/containers/Sablier/Data:/data
+    environment:
+      TZ: ${TZ}
+    healthcheck:
+      test: ["CMD", "/bin/sablier", "health", "--url", "http://127.0.0.1:10000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+      
+  tinyauth:
+    <<: *defaults
+    image: ghcr.io/tinyauthapp/tinyauth:v5.2.0
+    container_name: tinyauth
+    user: 1000:1000
+    cap_drop:
+      - ALL
+    networks:
+      - proxy-network
+      - data-network
+    volumes:
+      - /srv/containers/Tinyauth:/data
+    environment:
+      TZ: ${TZ}
+      TINYAUTH_APPURL: "https://access.boul2gom.com"
+      TINYAUTH_ANALYTICS_ENABLED: "false"
+      TINYAUTH_LABELPROVIDER: "none"
+      TINYAUTH_DATABASE_DRIVER: "postgres"
+      TINYAUTH_DATABASE_PATH: "postgres://tinyauth:${TINYAUTH_DB_PASSWORD}@postgres:5432/tinyauth?sslmode=disable"
+      TINYAUTH_AUTH_SECURECOOKIE: "true"
+      TINYAUTH_AUTH_SESSIONEXPIRY: "86400"
+      TINYAUTH_OAUTH_AUTOREDIRECT: "pocketid"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_NAME: "Pocket ID"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_CLIENTID: "${TINYAUTH_OIDC_CLIENT_ID}"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_CLIENTSECRET: "${TINYAUTH_OIDC_CLIENT_SECRET}"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_AUTHURL: "https://auth.boul2gom.com/authorize"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_TOKENURL: "https://auth.boul2gom.com/api/oidc/token"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_USERINFOURL: "https://auth.boul2gom.com/api/oidc/userinfo"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_REDIRECTURL: "https://access.boul2gom.com/api/oauth/callback/pocketid"
+      TINYAUTH_OAUTH_PROVIDERS_POCKETID_SCOPES: "openid,email,profile,groups"
+    healthcheck:
+      test: ["CMD", "tinyauth", "healthcheck"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.tinyauth.rule: "Host(`access.boul2gom.com`)"
+      traefik.http.routers.tinyauth.entrypoints: "websecure"
+      traefik.http.services.tinyauth.loadbalancer.server.port: "3000"
+      
+  homarr:
+    <<: *defaults
+    image: ghcr.io/homarr-labs/homarr:v2.14.0
+    container_name: homarr
+    networks:
+      - proxy-network
+      - data-network
+      - gateway-network
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/containers/Homarr:/appdata
+    environment:
+      TZ: ${TZ}
+      LOG_LEVEL: "info"
+      BASE_URL: "https://home.boul2gom.com"
+      SECRET_ENCRYPTION_KEY: "${HOMARR_SECRET_ENCRYPTION_KEY}"
+      DB_DIALECT: "postgresql"
+      DB_DRIVER: "node-postgres"
+      DB_URL: "postgres://homarr:${HOMARR_DB_PASSWORD}@postgres:5432/homarr"
+      REDIS_IS_EXTERNAL: "true"
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      AUTH_PROVIDERS: "oidc,credentials"
+      AUTH_OIDC_ISSUER: "https://auth.boul2gom.com"
+      AUTH_OIDC_CLIENT_ID: "${HOMARR_OIDC_CLIENT_ID}"
+      AUTH_OIDC_CLIENT_SECRET: "${HOMARR_OIDC_CLIENT_SECRET}"
+      AUTH_OIDC_CLIENT_NAME: "Pocket ID"
+      AUTH_OIDC_AUTO_LOGIN: "false"
+      AUTH_OIDC_SCOPE_OVERWRITE: "openid email profile groups"
+      AUTH_OIDC_GROUPS_ATTRIBUTE: "groups"
+      ENABLE_DOCKER: "true"
+      ENABLE_KUBERNETES: "false"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:7575/api/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.homarr.rule: "Host(`home.boul2gom.com`)"
+      traefik.http.routers.homarr.entrypoints: "websecure"
+      traefik.http.services.homarr.loadbalancer.server.port: "7575"
+      
   cloudflare-ddns:
     <<: *defaults
     image: timothyjmiller/cloudflare-ddns:2.3.1
@@ -90,6 +353,7 @@ services:
       - blocky
     networks:
       - gateway-network
+      - proxy-network
     volumes:
       - /srv/containers/Blocky/Logs:/logs:ro
     environment:
@@ -115,6 +379,7 @@ services:
     container_name: netbird-dashboard
     networks:
       - gateway-network
+      - proxy-network
     environment:
       NETBIRD_MGMT_API_ENDPOINT: https://vpn.boul2gom.com:443
       NETBIRD_MGMT_GRPC_API_ENDPOINT: https://vpn.boul2gom.com:443
@@ -150,6 +415,7 @@ services:
     networks:
       - data-network
       - gateway-network
+      - proxy-network
     volumes:
       - /srv/containers/NetBird/Manager:/var/lib/netbird
       - /srv/containers/NetBird/Config/management.json:/etc/netbird/management.json
@@ -210,6 +476,7 @@ services:
       - "80"
     networks:
       - gateway-network
+      - proxy-network
     volumes:
       - /srv/containers/NetBird/Signal:/var/lib/netbird
     healthcheck:
@@ -240,6 +507,7 @@ services:
       - "33080"
     networks:
       - gateway-network
+      - proxy-network
     environment:
       NB_LOG_LEVEL: info
       NB_LISTEN_ADDRESS: :33080
@@ -281,5 +549,8 @@ networks:
   gateway-network:
     driver: bridge
     name: gateway-network
+  proxy-network:
+    driver: bridge
+    name: proxy-network
   data-network:
     external: true
