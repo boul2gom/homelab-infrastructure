@@ -113,7 +113,7 @@ services:
       - "--experimental.plugins.sablier.moduleName=github.com/sablierapp/sablier-traefik-plugin"
       - "--experimental.plugins.sablier.version=v1.4.0"
       - "--experimental.plugins.traefik-real-ip.moduleName=github.com/zekihan/traefik-real-ip"
-      - "--experimental.plugins.traefik-real-ip.version=v0.3.0"
+      - "--experimental.plugins.traefik-real-ip.version=v0.3.1"
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
