@@ -149,7 +149,7 @@ services:
       - /srv/containers/TraefikManager/Backups:/app/backups
       - /srv/containers/Traefik/Dynamic:/app/dynamic:rw
       - /srv/containers/Traefik/Certs/acme.json:/app/acme.json:ro
-      - /srv/containers/Traefik/Logs/access.log:/app/logs/access.log:ro
+      - /srv/containers/Traefik/Logs:/app/logs:ro
     environment:
       TZ: ${TZ}
       PUID: "1000"
