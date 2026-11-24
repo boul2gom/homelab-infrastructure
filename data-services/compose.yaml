@@ -140,7 +140,7 @@ services:
     <<: *defaults
     profiles:
       - future
-    image: getmeili/meilisearch:v1.57.0
+    image: getmeili/meilisearch:v1.58.0
     container_name: meilisearch
     networks:
       - data-network
