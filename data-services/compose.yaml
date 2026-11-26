@@ -51,7 +51,7 @@ services:
 
   garage:
     <<: *defaults
-    image: dxflrs/garage:v2.5.0
+    image: dxflrs/garage:v2.6.0
     container_name: garage
     networks:
       - data-network
