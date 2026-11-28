@@ -16,7 +16,6 @@ services:
     image: stirlingtools/stirling-pdf:3.5.0-fat
     container_name: stirling-pdf
     networks:
-      - data-network
       - proxy-network
     volumes:
       - /srv/containers/Stirling/Tessdata:/usr/share/tesseract-ocr/5/tessdata
@@ -24,6 +23,8 @@ services:
       - /srv/containers/Stirling/Logs:/logs
       - /srv/containers/Stirling/Pipeline:/pipeline
     environment:
+      PUID: "1000"
+      PGID: "1000"
       SECURITY_ENABLELOGIN: "true"
       SECURITY_INITIALLOGIN_USERNAME: ${STIRLING_INIT_USERNAME}
       SECURITY_INITIALLOGIN_PASSWORD: ${STIRLING_INIT_PASSWORD}
@@ -31,10 +32,7 @@ services:
       SYSTEM_ROOTURIPATH: /
       SYSTEMFILEUPLOADLIMIT: 2000MB
       DISABLE_ADDITIONAL_FEATURES: "false"
-      SYSTEM_DATASOURCE_ENABLECUSTOMDATABASE: "true"
-      SYSTEM_DATASOURCE_CUSTOMDATABASEURL: jdbc:postgresql://postgres:5432/stirling
-      SYSTEM_DATASOURCE_USERNAME: ${STIRLING_DB_USERNAME}
-      SYSTEM_DATASOURCE_PASSWORD: ${STIRLING_DB_PASSWORD}
+      SYSTEM_DATASOURCE_ENABLECUSTOMDATABASE: "false"
       UI_LANGUAGES: fr_FR,en_US
       SYSTEM_DEFAULTLOCALE: fr-FR
     healthcheck:
@@ -61,7 +59,5 @@ services:
 networks:
   default:
     name: tools-network
-  data-network:
-    external: true
   proxy-network:
     external: true
