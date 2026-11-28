@@ -195,7 +195,7 @@ graph TD
 
 | Service | Image | DB | Auth | Subdomains proposés |
 |---------|-------|-----|------|---------------------|
-| 🎉 Stirling-PDF | `stirlingtools/stirling-pdf:latest-fat` | PostgreSQL partagé | Auth interne | `pdf` · `tools` · `docs-tools` |
+| 🎉 Stirling-PDF | `stirlingtools/stirling-pdf:latest-fat` | H2 intégré | Auth interne | `pdf` · `tools` · `docs-tools` |
 | Mazanoke | `ghcr.io/civilblur/mazanoke:latest` | *(client-side)* | Middleware OIDC | `img` · `compress` · `images` |
 | Draw.io | `jgraph/drawio:latest` | *(client-side)* | Middleware OIDC | `draw` · `diagrams` · `drawio` |
 | Excalidraw | `excalidraw/excalidraw:latest` | *(client-side)* | Middleware OIDC | `sketch` · `whiteboard` · `canvas` |
